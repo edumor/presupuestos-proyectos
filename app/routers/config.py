@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 
 from sqlalchemy import select
 
-from .. import costeo
+from .. import costeo, licencia
 from ..config import logo_personalizado
 from ..database import get_db
 from ..models import CostoFijo, Cotizacion, Persona, Proyecto
@@ -34,6 +34,7 @@ def _out(db: Session, cfg) -> ConfigOut:
     o = ConfigOut.model_validate(cfg)
     o.tiene_logo = logo_path().exists()
     o.puede_cambiar_base = not hay_datos(db)
+    o.licencia_info = licencia.validar(cfg.licencia)
     return o
 
 

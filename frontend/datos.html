@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Datos · Presupuestos</title>
+  <link rel="stylesheet" href="assets/app.css">
+</head>
+<body>
+<main>
+  <h1>Datos</h1>
+  <p class="sub">Copias de seguridad, restauración e importación desde Excel.</p>
+
+  <div class="grid g2">
+    <div class="card">
+      <h2>Copia de seguridad</h2>
+      <p class="small muted">Descargá una copia completa de la base (proyectos, presupuestos, horas, facturas, configuración) para guardarla en un pendrive, la nube o llevarla a otra PC. El programa además hace una copia automática cada vez que se abre.</p>
+      <div class="actions" style="justify-content:flex-start"><button class="primary" onclick="descargar('/api/respaldos/descargar')">Descargar copia</button></div>
+    </div>
+    <div class="card">
+      <h2>Restaurar una copia</h2>
+      <p class="small muted">Reemplaza <strong>todos</strong> los datos actuales por los de la copia. Antes de hacerlo se guarda una copia de lo actual, así podés volver atrás desde la lista de abajo. Las copias de versiones anteriores del programa se actualizan solas.</p>
+      <label class="zona-archivo" id="zona-db">Arrastrá acá el archivo .db o hacé clic para elegirlo
+        <input type="file" id="archivo-db" accept=".db,.sqlite,.sqlite3" hidden></label>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:16px">
+    <h2>Importar desde Excel</h2>
+    <p class="small muted">Para cargar de una vez el equipo, los gastos fijos, los servicios, los clientes, horas de otra planilla o facturas y cobros anteriores.
+      Bajá la planilla modelo, completá las hojas que necesites y subila: primero vas a ver una vista previa; si hay errores no se importa nada hasta corregirlos.</p>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:stretch">
+      <button onclick="descargar('/api/importar/plantilla')">1. Bajar la planilla modelo</button>
+      <label class="zona-archivo" id="zona-xlsx" style="flex:1;min-width:260px">2. Arrastrá acá el Excel completo o hacé clic para elegirlo
+        <input type="file" id="archivo-xlsx" accept=".xlsx" hidden></label>
+    </div>
+    <div id="vista-previa"></div>
+  </div>
+
+  <div class="card" style="margin-top:16px">
+    <h2>Copias automáticas</h2>
+    <p class="small muted">Se guardan las últimas 30 copias de cada apertura del programa y las 10 últimas hechas antes de restaurar. Restaurar una de ellas no la borra.</p>
+    <div class="tabla-scroll"><table><thead><tr><th>Copia</th><th>Fecha</th><th class="num">Tamaño</th><th></th></tr></thead><tbody id="tabla-resp"></tbody></table></div>
+  </div>
+</main>
+<script src="assets/app.js"></script>
+<script>
+let XLSX_ARCHIVO = null;
+const MB = n => fmtNum(n / 1048576, 1) + ' MB';
+
+function zona(idZona, idInput, alElegir) {
+  const z = document.getElementById(idZona), inp = document.getElementById(idInput);
+  inp.addEventListener('change', () => { if (inp.files[0]) alElegir(inp.files[0]); inp.value = ''; });
+  z.addEventListener('dragover', e => { e.preventDefault(); z.classList.add('sobre'); });
+  z.addEventListener('dragleave', () => z.classList.remove('sobre'));
+  z.addEventListener('drop', e => { e.preventDefault(); z.classList.remove('sobre'); if (e.dataTransfer.files[0]) alElegir(e.dataTransfer.files[0]); });
+}
+
+async function cargarRespaldos() {
+  const xs = await api('/respaldos');
+  document.getElementById('tabla-resp').innerHTML = xs.map(r => `<tr><td>${r.antes_de_restaurar ? '<span class="tag warn">Antes de restaurar</span>' : 'Al abrir el programa'}
+      <div class="small muted">${esc(r.nombre)}</div></td>
+    <td>${fmtFecha(r.fecha.slice(0, 10))} ${r.fecha.slice(11, 16)}</td><td class="num">${MB(r.tamano)}</td>
+    <td class="num"><button onclick="restaurarAuto('${esc(r.nombre)}', '${fmtFecha(r.fecha.slice(0, 10))} ${r.fecha.slice(11, 16)}')">Restaurar</button></td></tr>`).join('')
+    || '<tr><td colspan="4" class="muted">Todavía no hay copias automáticas: se crean al abrir el programa.</td></tr>';
+}
+
+function listo(r) {
+  toast('Datos restaurados. Se guardó una copia de lo anterior.');
+  setTimeout(() => location.reload(), 900);
+}
+async function restaurarArchivo(archivo) {
+  if (!confirm(`¿Reemplazar TODOS los datos actuales por los de «${archivo.name}»?\n\nAntes se guarda una copia de lo actual.`)) return;
+  try { listo(await api('/respaldos/restaurar', { method: 'POST', archivo })); } catch (e) { toast(e.message, true); }
+}
+async function restaurarAuto(nombre, fecha) {
+  if (!confirm(`¿Volver a los datos del ${fecha}?\n\nAntes se guarda una copia de lo actual.`)) return;
+  try { listo(await api(`/respaldos/${encodeURIComponent(nombre)}/restaurar`, { method: 'POST' })); } catch (e) { toast(e.message, true); }
+}
+
+const ACCION = { nuevo: ['Nuevo', 'ok'], actualizado: ['Se actualiza', 'emp'], omitido: ['Ya estaba', ''] };
+async function vistaPrevia(archivo) {
+  XLSX_ARCHIVO = archivo;
+  const cont = document.getElementById('vista-previa');
+  cont.innerHTML = '<p class="muted">Leyendo el archivo…</p>';
+  let r;
+  try { r = await api('/importar/vista-previa', { method: 'POST', archivo }); }
+  catch (e) { cont.innerHTML = ''; return toast(e.message, true); }
+  const resumen = r.hojas.map(h => `<div class="card kpi" style="box-shadow:none"><div class="label">${esc(h.hoja)}</div>
+    <div class="value ${h.errores.length ? 'bad' : ''}" style="font-size:20px">${h.nuevos + h.actualizados}</div>
+    <div class="note">${h.nuevos} nuevos · ${h.actualizados} se actualizan${h.omitidos ? ' · ' + h.omitidos + ' ya estaban' : ''}${h.errores.length ? ` · <span class="v-bad">${h.errores.length} ${h.errores.length === 1 ? 'error' : 'errores'}</span>` : ''}</div></div>`).join('');
+  const errores = r.hojas.flatMap(h => h.errores.map(e => `<tr><td>${esc(h.hoja)}</td><td class="num">${e.fila}</td><td class="v-bad">${esc(e.mensaje)}</td></tr>`)).join('');
+  const filas = r.hojas.flatMap(h => h.filas.map(f => { const [t, c] = ACCION[f.accion];
+    return `<tr><td>${esc(h.hoja)}</td><td class="num">${f.fila}</td><td><span class="tag ${c}">${t}</span></td><td>${esc(f.detalle)}</td></tr>`; })).join('');
+  cont.innerHTML = `<h3 style="margin:18px 0 8px">Vista previa de «${esc(archivo.name)}»</h3>
+    <div class="grid g4">${resumen}</div>
+    ${r.errores ? `<div class="alert warn" style="margin-top:14px">Hay <strong>${r.errores} ${r.errores === 1 ? 'error' : 'errores'}</strong>. Corregí la planilla y volvé a subirla: no se importa nada hasta que no haya errores.</div>
+      <div class="tabla-scroll"><table><thead><tr><th>Hoja</th><th class="num">Fila</th><th>Error</th></tr></thead><tbody>${errores}</tbody></table></div>`
+      : `<div class="actions" style="justify-content:flex-start;margin-top:14px"><button class="primary" onclick="importarAhora()" ${r.total ? '' : 'disabled'}>Importar ${r.total} registros</button>
+        <button onclick="document.getElementById('vista-previa').innerHTML=''">Cancelar</button></div>`}
+    <details style="margin-top:12px"${r.errores ? '' : ' open'}><summary class="small">Detalle fila por fila</summary>
+      <div class="tabla-scroll" style="max-height:360px;overflow:auto"><table><thead><tr><th>Hoja</th><th class="num">Fila</th><th>Acción</th><th>Detalle</th></tr></thead><tbody>${filas}</tbody></table></div></details>`;
+}
+async function importarAhora() {
+  try {
+    const r = await api('/importar', { method: 'POST', archivo: XLSX_ARCHIVO });
+    document.getElementById('vista-previa').innerHTML = `<div class="alert info" style="margin-top:14px">Listo: se importaron ${r.total} registros.</div>`;
+    toast('Importación terminada');
+  } catch (e) { toast(e.message, true); }
+}
+
+zona('zona-db', 'archivo-db', restaurarArchivo);
+zona('zona-xlsx', 'archivo-xlsx', vistaPrevia);
+cargarRespaldos();
+</script>
+</body>
+</html>

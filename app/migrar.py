@@ -14,3 +14,11 @@ def migrar() -> None:
     with engine.begin() as conn:
         cfg.attributes["connection"] = conn
         command.upgrade(cfg, "head")
+
+
+def revisiones() -> list[str]:
+    """Versiones de esquema que este programa conoce (para validar respaldos)."""
+    from alembic.script import ScriptDirectory
+    cfg = Config()
+    cfg.set_main_option("script_location", str(resource_root() / "migrations"))
+    return [r.revision for r in ScriptDirectory.from_config(cfg).walk_revisions()]

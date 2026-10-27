@@ -114,3 +114,8 @@ dialog .fields > * { min-width: 0; } dialog .fields select, dialog .fields input
 tr.sub td { border-top: none; padding-top: 0; }
 tr.con-sub td { border-bottom: none; }
 dialog .fields input[type=checkbox] { width: auto; }
+.aviso-version { max-width: 1088px; margin: 12px auto 0; padding: 10px 16px; border-radius: var(--radius); background: #e3f4e8; border: 1px solid #b6e0c2; color: #14532d; font-size: 14px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.aviso-version button.link { margin-left: auto; font-size: 18px; color: #14532d; }
+footer.credito a.pie-aviso { color: var(--warn); }
+.zona-archivo { border: 2px dashed var(--line); border-radius: var(--radius); padding: 18px; text-align: center; color: var(--muted); }
+.zona-archivo.sobre { border-color: var(--accent); background: var(--accent-soft); }

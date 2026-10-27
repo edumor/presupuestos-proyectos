@@ -10,6 +10,7 @@ const PAGINAS = [
   ['estructura.html', 'Estructura'],
   ['servicios.html', 'Servicios'],
   ['cotizaciones.html', 'Cotizaciones'],
+  ['datos.html', 'Datos'],
   ['configuracion.html', 'Configuración'],
   ['ayuda.html', 'Ayuda'],
 ];
@@ -70,12 +71,42 @@ function renderNav() {
     + ' · <a href="ayuda.html#licencia" title="Software libre bajo GPL-3.0, sin garantía">Software libre GPL-3.0</a></span>'
     + '<span class="cred">Desarrollo e Implementación: Lic. Eduardo J. Moreno</span></footer><div id="toast"></div>');
   fetch('/api/health').then(r => r.json()).then(h => { document.getElementById('pie-version').textContent = 'Presupuestos v' + h.version; }).catch(() => {});
+  CFG_LISTA.then(c => {
+    const l = c && c.licencia_info;
+    if (!l) return;
+    document.getElementById('pie-version').insertAdjacentHTML('afterend', ` · <a href="configuracion.html#licencia" class="${l.estado === 'registrada' ? '' : 'pie-aviso'}">${esc(l.leyenda)}</a>`);
+  });
+  avisoVersion();
+}
+
+// Aviso de versión nueva: una consulta por sesión (el servidor la guarda 6 horas); se puede posponer
+async function avisoVersion() {
+  let omitida = null;
+  try { if (sessionStorage.getItem('version-vista')) return; omitida = localStorage.getItem('version-omitida'); } catch (e) { }
+  try {
+    const r = await fetch('/api/actualizacion').then(x => x.json());
+    try { sessionStorage.setItem('version-vista', '1'); } catch (e) { }
+    if (!r.hay_nueva || r.ultima === omitida) return;
+    const h = document.querySelector('header.top');
+    h.insertAdjacentHTML('afterend', `<div class="aviso-version" id="aviso-version">Hay una versión nueva: <strong>${esc(r.ultima)}</strong> (tenés la ${esc(r.actual)}).
+      ${r.instalador ? `<a href="${esc(r.instalador)}" target="_blank" rel="noopener">Descargar el instalador</a> ·` : ''}
+      <a href="${esc(r.url)}" target="_blank" rel="noopener">Ver novedades</a>
+      <span class="muted small">Tus datos se conservan al actualizar.</span>
+      <button class="link" title="No volver a avisar por esta versión" onclick="omitirVersion('${esc(r.ultima)}')">×</button></div>`);
+  } catch (e) { }
+}
+function omitirVersion(v) {
+  try { localStorage.setItem('version-omitida', v); } catch (e) { }
+  const a = document.getElementById('aviso-version'); if (a) a.remove();
 }
 
 async function api(path, opts = {}) {
   await CFG_LISTA;
   const init = { method: opts.method || 'GET', headers: {} };
-  if (opts.body !== undefined) {
+  if (opts.archivo !== undefined) {  // un archivo (File/Blob) tal cual, por ejemplo un Excel o un respaldo
+    init.headers['Content-Type'] = 'application/octet-stream';
+    init.body = opts.archivo;
+  } else if (opts.body !== undefined) {
     init.headers['Content-Type'] = 'application/json';
     init.body = JSON.stringify(opts.body);
   }

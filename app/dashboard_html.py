@@ -17,7 +17,7 @@ from decimal import Decimal
 
 from sqlalchemy.orm import Session
 
-from . import CREDITO, costeo, documentos, seguimiento
+from . import CREDITO, costeo, documentos, licencia, seguimiento
 from .config import frontend_dir, logo_efectivo
 from .models import Proyecto
 
@@ -65,6 +65,7 @@ def generar(db: Session, p: Proyecto, version: str, a_fecha: date | None = None,
     datos = dict(version=version, hoy=hoy, idioma=idioma, moneda=costeo.moneda_base(db), generado=datetime.now().strftime("%d/%m/%Y %H:%M"),
                  credito=CREDITO, logo=_logo_data_url(),
                  empresa=costeo.config(db).empresa_nombre or "",
+                 registro="" if version == "cliente" else licencia.leyenda_interna(db),
                  gantt=_gantt(p, m, hoy, con_personas=not cliente))
     if cliente:
         d = documentos.datos(db, p, hoy, None, idioma)
@@ -218,7 +219,7 @@ document.getElementById('titulo').textContent = D.proyecto.nombre;
 document.getElementById('sub').textContent = fmt(T.sub, { c: D.proyecto.cliente, i: fec(D.proyecto.inicio), f: fec(D.proyecto.fin), h: fec(D.hoy) });
 if (D.logo) { const l = document.getElementById('logo'); l.src = D.logo; l.hidden = false; }
 ['etapas', 'gantt', 'g1', 'g2', 'tabla'].forEach(k => document.getElementById('t-' + k).textContent = T[k]);
-document.getElementById('pie').textContent = fmt(T.pie, { g: D.generado, e: D.empresa ? ' · ' + D.empresa : '' });
+document.getElementById('pie').textContent = fmt(T.pie, { g: D.generado, e: D.empresa ? ' · ' + D.empresa : '' }) + (D.registro ? ' · ' + D.registro : '');
 document.getElementById('cred').textContent = D.credito;
 
 // KPIs

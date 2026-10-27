@@ -16,7 +16,7 @@ from .database import SessionLocal
 from .migrar import migrar
 from .models import Persona
 from .routers import (config, cotizaciones, dashboard, ejemplo, equipo, estructura, exportar, facturacion, horas,
-                      presupuestos, proyectos, rentabilidad)
+                      presupuestos, proyectos, rentabilidad, sistema)
 
 
 def _primer_inicio(db) -> None:
@@ -57,7 +57,7 @@ def health():
 
 for r in (config.router, cotizaciones.router, cotizaciones.ipc_router, equipo.router, estructura.router, ejemplo.router,
           proyectos.router, presupuestos.router, horas.router, dashboard.router, exportar.router, facturacion.router,
-          rentabilidad.router):
+          rentabilidad.router, sistema.router):
     app.include_router(r)
 
 app.mount("/", StaticFiles(directory=frontend_dir(), html=True), name="frontend")

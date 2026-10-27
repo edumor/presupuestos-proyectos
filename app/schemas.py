@@ -43,10 +43,12 @@ class ConfigIn(BaseModel):
     validez_dias: int = Field(default=30, ge=1, le=365)
     condiciones: str | None = None
     aumento_costos_mensual: float = Field(default=0.0, ge=0, le=1)
+    buscar_actualizaciones: bool = True
 
 
 class ConfigOut(ConfigIn, ORM):
     moneda_base: str
+    licencia_info: dict | None = None
     tiene_logo: bool = False
     puede_cambiar_base: bool = False
     monedas: dict[str, str] = MONEDAS

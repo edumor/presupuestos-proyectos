@@ -13,7 +13,7 @@ from fastapi.responses import Response
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from .. import CREDITO, costeo, dashboard_html, documentos, excel, excel_cliente, pdf_cliente, seguimiento
+from .. import CREDITO, costeo, dashboard_html, documentos, excel, excel_cliente, licencia, pdf_cliente, seguimiento
 from ..database import Base, get_db
 from ..excel import FMT_NUM, FMT_PCT, fmt_moneda
 from ..models import CostoExterno, Presupuesto, Proyecto
@@ -65,6 +65,7 @@ def proyecto(pid: int, db: Session = Depends(get_db)):
     ])
     ws.cell(f + 1, 1, "CPI o SPI menores que 1 indican sobrecosto o atraso.").font = excel.Font(italic=True, color="5D6677")
     ws.cell(f + 3, 1, CREDITO).font = excel.Font(italic=True, size=8, color="8A93A3")
+    ws.cell(f + 4, 1, licencia.leyenda_interna(db)).font = excel.Font(italic=True, size=8, color="8A93A3")
 
     # Etapas
     cols = [("Etapa", None), ("Peso", FMT_PCT), ("Inicio previsto", None), ("Fin previsto", None),

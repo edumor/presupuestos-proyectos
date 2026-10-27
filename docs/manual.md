@@ -15,7 +15,7 @@ Todo funciona en tu computadora, sin internet. Los importes se calculan en una *
 
 ## 2. Instalación
 
-1. Abrí el instalador **Presupuestos-Setup-0.7.0.exe** (el número cambia con cada versión).
+1. Abrí el instalador **Presupuestos-Setup-0.8.0.exe** (el número cambia con cada versión).
 2. Windows puede mostrar el aviso **"Windows protegió su PC"**, porque el programa no tiene firma digital comercial. Hacé clic en **Más información** y después en **Ejecutar de todos modos**. Es un aviso normal para programas sin firma comercial.
 3. Seguí el asistente: **Siguiente → Instalar → Finalizar**. No pide contraseña de administrador.
 4. Al terminar queda un acceso directo **Presupuestos** en el escritorio y en el menú Inicio. En el menú Inicio también encontrás este manual y la carpeta de datos.
@@ -48,13 +48,14 @@ El menú superior tiene estas secciones:
 | **Estructura** | Gastos fijos de la empresa | Cuando cambia un gasto fijo |
 | **Servicios** | Catálogo de lo que vendés, para armar presupuestos | Al empezar y cuando sumás un servicio |
 | **Cotizaciones** | Cuánto vale cada moneda (dólar, euro…) en la moneda base | Cuando cambia el tipo de cambio |
+| **Datos** | Copias de seguridad, restauración e importación desde Excel | Al empezar y cuando quieras guardar una copia |
 | **Configuración** | Datos y logo de la empresa, moneda base, parámetros y datos de ejemplo | Al empezar; después, rara vez |
 
 En casi todas las pantallas hay íconos **?**: pasá el mouse por encima para ver una explicación del número.
 
 ## 4. Puesta en marcha (una sola vez)
 
-Hacelo en este orden, porque cada paso usa los datos del anterior.
+Hacelo en este orden, porque cada paso usa los datos del anterior. Si ya tenés el equipo, los gastos fijos, los servicios o los clientes en una planilla, podés cargarlos de una vez con **Datos → Importar desde Excel** (sección 10.3).
 
 ### 4.1 Borrar los datos de ejemplo
 
@@ -426,18 +427,48 @@ El dashboard se descarga como **un solo archivo .html** que se abre con doble cl
 
 Los archivos se descargan en la carpeta **Descargas** con el nombre del proyecto y la fecha.
 
-## 10. Respaldos y datos
+## 10. Respaldos, restauración e importación
 
-- Los datos están en la carpeta **PresupuestosApp** dentro de tu carpeta de usuario (`%LOCALAPPDATA%\PresupuestosApp`). Desde el menú Inicio: **Presupuestos → Carpeta de datos y respaldos**.
-- **Cada vez que abrís el programa se hace un respaldo automático** en la subcarpeta `backups`. Se guardan los últimos 30.
-- **Desinstalar o actualizar el programa no borra tus datos.**
-- Para restaurar un respaldo: cerrá el programa (ventana negra), copiá el respaldo elegido de `backups` a la carpeta `PresupuestosApp` y renombralo como `presupuestos.db`, reemplazando el existente. Si en la carpeta hay archivos `presupuestos.db-wal` o `presupuestos.db-shm`, borralos antes.
-- Para pasar los datos a otra computadora: instalá el programa allí, abrilo y cerralo una vez. Después, con el programa cerrado en las dos, copiá `presupuestos.db` (y los archivos `presupuestos.db-wal` y `presupuestos.db-shm`, si existen) a la misma carpeta de la otra computadora, reemplazando los que haya.
-- Recomendación: una vez por semana copiá el último respaldo a OneDrive, Google Drive o un pendrive.
+Todo esto está en la pantalla **Datos**.
+
+![Pantalla Datos](assets/manual/33_datos.png)
+
+### 10.1 Copias de seguridad
+
+- **Cada vez que abrís el programa se hace una copia automática.** Se guardan las últimas 30 y aparecen en **Copias automáticas**, con su fecha.
+- **Descargar copia** baja un archivo `.db` con todos los datos: proyectos, presupuestos, horas, facturas y configuración. El logo no va incluido; si lo cambiás de PC, volvé a cargarlo en Configuración.
+- **Desinstalar o actualizar el programa no borra tus datos.** Están en la carpeta `%LOCALAPPDATA%\PresupuestosApp` (menú Inicio: **Presupuestos → Carpeta de datos y respaldos**).
+- Recomendación: una vez por semana descargá una copia y guardala en OneDrive, Google Drive o un pendrive.
+
+### 10.2 Restaurar una copia o pasar los datos a otra PC
+
+1. En **Datos → Restaurar una copia**, arrastrá el archivo `.db` (o hacé clic para elegirlo), o tocá **Restaurar** en una de las copias automáticas.
+2. Confirmá. Se reemplazan **todos** los datos actuales por los de la copia.
+3. Antes de reemplazar, el programa guarda una copia de lo que había (aparece como **Antes de restaurar** en la lista), así que siempre podés volver atrás.
+
+Para pasar los datos a otra computadora: descargá una copia en la PC vieja, instalá el programa en la nueva y restaurá la copia desde **Datos**. Una copia de una versión anterior del programa se actualiza sola; una de una versión más nueva no se puede restaurar hasta actualizar el programa.
+
+### 10.3 Importar desde Excel
+
+Sirve para empezar rápido con tus datos (equipo, gastos fijos, servicios, clientes) o para traer horas, facturas y cobros que tenías en otra planilla.
+
+1. Tocá **1. Bajar la planilla modelo**. Tiene una hoja de instrucciones y una hoja por tipo de dato: **Equipo, Gastos fijos, Servicios, Clientes, Horas, Facturas y Cobros**. Las columnas con * son obligatorias y algunas tienen listas desplegables.
+2. Completá solo las hojas que necesites. Los importes pueden ir como `1.234,56`; las fechas como `dd/mm/aaaa`.
+3. Arrastrá el Excel a **2. Arrastrá acá el Excel completo**. Vas a ver una **vista previa**: cuántos registros son nuevos, cuántos se actualizan y cuáles ya estaban, y el detalle fila por fila.
+4. Si hay errores (por ejemplo, una persona o una tarea que no existe), aparecen con su hoja y número de fila, y **no se importa nada** hasta corregirlos. Corregí la planilla y volvé a subirla.
+5. Sin errores, tocá **Importar**.
+
+![Vista previa con un error](assets/manual/34_importar_errores.png)
+
+Reglas: las personas, gastos, servicios y clientes se buscan por nombre y las facturas por número dentro del proyecto. Si ya existen, se actualizan. Las horas y los cobros que ya estén cargados iguales se omiten, así que podés subir la misma planilla dos veces sin duplicar. Los roles que no existen se crean. Los proyectos, tareas y etapas tienen que existir antes de importar horas o facturas.
 
 ## 11. Actualizaciones
 
-Cuando recibas una versión nueva (por ejemplo **Presupuestos-Setup-0.7.0.exe**), cerrá el programa y ejecutá el instalador nuevo: reemplaza el programa y conserva todos los datos. La base se adapta sola a la versión nueva la primera vez que la abrís.
+Al abrir el programa, si hay internet, se consulta si hay una versión nueva publicada. Si la hay, aparece un aviso verde arriba con el enlace para **descargar el instalador** y ver las novedades. Con la **×** se oculta el aviso hasta la próxima versión. El programa solo lee el número de versión publicado en GitHub, no envía ningún dato. Se puede desactivar en **Configuración → Licencia y actualizaciones**.
+
+![Aviso de versión nueva](assets/manual/32_aviso_version.png)
+
+Cuando recibas una versión nueva (por ejemplo **Presupuestos-Setup-0.8.0.exe**), cerrá el programa y ejecutá el instalador nuevo: reemplaza el programa y conserva todos los datos. La base se adapta sola a la versión nueva la primera vez que la abrís.
 
 Si venías usando una versión anterior en dólares, se conservan todos los importes y la moneda base sigue siendo **USD**. El logo que traía esa versión ya no viene incluido: si querés verlo en la barra, cargalo en **Configuración → Datos de la empresa**.
 
@@ -482,6 +513,7 @@ Si venías usando una versión anterior en dólares, se conservan todos los impo
 | Ingreso devengado | Precio del proyecto × avance logrado en un período: lo ganado trabajando, se haya facturado o no |
 | Diferencia de cambio | En facturas en otra moneda: lo cobrado a la cotización del día del cobro menos lo mismo a la cotización de la factura |
 | Valor vendido por hora | Precio del proyecto ÷ horas presupuestadas |
+| Licencia | Clave firmada que registra a la empresa usuaria; no limita ninguna función |
 | Versión del presupuesto | Cada propuesta de precio y alcance enviada al cliente; la aprobada congela costos y genera las tareas |
 
 <a id="licencia"></a>
@@ -496,5 +528,13 @@ Términos adicionales (sección 7 de la GPL-3.0):
 
 - Toda copia o versión modificada debe conservar visible la leyenda **"Desarrollo e Implementación: Lic. Eduardo J. Moreno"** en el pie de las pantallas y de los documentos y dashboards que genera.
 - Las versiones modificadas deben indicar que lo son y quién las modificó.
+
+### Licencia de uso registrada
+
+El programa funciona **completo con o sin licencia**. Sin licencia muestra **Versión sin registrar** en el pie de las pantallas y en los documentos internos (Excel y dashboard interno; nunca en los documentos para el cliente). La licencia registra a tu empresa como usuaria y muestra **Licenciado a …** en su lugar.
+
+Para activarla: **Configuración → Licencia y actualizaciones**, pegá la clave completa (empieza con `PRES1-`) y tocá **Activar**. Se valida en tu PC, sin internet. Si la licencia tiene vencimiento, al vencer el programa sigue funcionando y vuelve a mostrar el aviso hasta renovarla.
+
+![Licencia activada](assets/manual/31_licencia.png)
 
 El programa se entrega **sin ninguna garantía**. El texto completo de la licencia y el aviso de autoría están en los archivos `LICENSE` y `NOTICE.md` de la carpeta del programa y del repositorio.

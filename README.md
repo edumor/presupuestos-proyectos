@@ -38,6 +38,11 @@ del usuario y se respalda sola cada vez que se abre el programa.
 - **Datos y logo de cada empresa** configurables: nombre, domicilio, localidad, provincia,
   teléfonos, email, web y CUIT.
 - Exportación interna a **Excel** con gráficos nativos.
+- **Datos**: copia de seguridad descargable, restauración con copia previa automática e
+  **importación desde Excel** (equipo, gastos fijos, servicios, clientes, horas, facturas y cobros) con
+  vista previa y validación fila por fila.
+- **Aviso de versión nueva** (consulta GitHub Releases, desactivable) y **licencia de uso registrada**
+  firmada con Ed25519 y validada sin internet; el programa funciona completo con o sin licencia.
 
 ## Tecnología
 

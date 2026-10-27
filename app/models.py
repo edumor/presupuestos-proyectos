@@ -80,6 +80,9 @@ class Configuracion(Base):
     # Aumento mensual previsto de sueldos y tarifas, para proyectar el costo del trabajo pendiente
     aumento_costos_mensual: Mapped[float] = mapped_column(Float, default=0.0)
     condiciones: Mapped[str | None] = mapped_column(Text)
+    licencia: Mapped[str | None] = mapped_column(Text)
+    # Consultar en GitHub si hay una versión nueva (solo al abrir, si hay internet)
+    buscar_actualizaciones: Mapped[bool] = mapped_column(Boolean, default=True)
 
 
 class Cotizacion(Base):

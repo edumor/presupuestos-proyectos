@@ -6,7 +6,7 @@ from datetime import date
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from .. import CREDITO, excel, rentabilidad
+from .. import CREDITO, excel, licencia, rentabilidad
 from ..database import get_db
 from ..excel import FMT_NUM, FMT_PCT, fmt_moneda
 from .exportar import _descarga
@@ -54,6 +54,7 @@ def exportar(desde: date | None = None, hasta: date | None = None, db: Session =
     ws.cell(fila + 1, 1, "Ingreso devengado = precio vigente × avance ganado en el período. "
                          "Costo = horas cargadas × costo por hora (con estructura) + gastos externos reales.")
     ws.cell(fila + 3, 1, CREDITO).font = excel.Font(color="5D6677", size=9)
+    ws.cell(fila + 4, 1, licencia.leyenda_interna(db)).font = excel.Font(color="5D6677", size=9)
 
     cols = [("Proyecto", None), ("Cliente", None), ("Avance inicio", FMT_PCT), ("Avance cierre", FMT_PCT),
             ("Devengado", m), ("Costo horas", m), ("Gastos", m), ("Costo", m), ("Margen", m), ("Margen %", FMT_PCT),

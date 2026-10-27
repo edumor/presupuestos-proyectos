@@ -61,6 +61,18 @@
       <p class="small muted" id="moneda-nota"></p>
       <div class="actions"><button class="primary" id="btn-moneda">Cambiar moneda base</button></div>
     </form>
+    <div class="card" id="licencia" style="grid-column:1/-1">
+      <h2>Licencia y actualizaciones</h2>
+      <div id="lic-estado"></div>
+      <form id="f-lic" style="margin-top:10px">
+        <label>Clave de licencia<textarea name="clave" rows="3" placeholder="PRES1-…" style="font-family:Consolas,monospace;font-size:12px" required></textarea></label>
+        <div class="actions" style="justify-content:flex-start"><button class="primary">Activar</button>
+          <button type="button" class="danger" id="btn-quitar-lic" onclick="quitarLicencia()" hidden>Quitar licencia</button></div>
+      </form>
+      <p class="small muted">El programa funciona completo con o sin licencia. La licencia registra a tu empresa como usuaria y quita el aviso «Versión sin registrar». Se valida en esta PC, sin internet.</p>
+      <label style="flex-direction:row;align-items:center;gap:8px;margin-top:12px"><input type="checkbox" id="chk-act"> Avisarme cuando haya una versión nueva</label>
+      <p class="small muted">Al abrir el programa consulta GitHub (si hay internet) para ver si hay una versión nueva. Solo lee el número de versión publicado: no envía ningún dato.</p>
+    </div>
     <div class="card">
       <h2>Datos de ejemplo</h2>
       <p id="ej-estado" class="muted"></p>
@@ -92,7 +104,7 @@ function pintarMoneda() {
 }
 async function cargar() {
   C = await api('/config');
-  llenarForm(f, C); llenarForm(fe, C); pintarLogo(C.tiene_logo); pintarMoneda();
+  llenarForm(f, C); llenarForm(fe, C); pintarLogo(C.tiene_logo); pintarMoneda(); pintarLicencia();
   const ej = await api('/ejemplo'), b = document.getElementById('btn-ej');
   document.getElementById('ej-estado').textContent = ej.cargado ? 'Los datos de ejemplo están cargados.' : 'No hay datos de ejemplo cargados.';
   b.textContent = ej.cargado ? 'Borrar datos de ejemplo' : 'Cargar datos de ejemplo';
@@ -104,6 +116,30 @@ async function cargar() {
     toast(ej.cargado ? 'Datos de ejemplo borrados' : 'Datos de ejemplo cargados'); cargar();
   };
 }
+function pintarLicencia() {
+  const l = C.licencia_info || {}, est = document.getElementById('lic-estado');
+  const fecha = v => v ? fmtFecha(v) : 'sin vencimiento';
+  est.innerHTML = l.estado === 'registrada'
+    ? `<div class="alert info" style="margin:0"><strong>Licenciado a ${esc(l.titular)}</strong>${l.cuit ? ' · CUIT ' + esc(l.cuit) : ''} · licencia ${esc(l.numero || '')} · vence: ${fecha(l.vence)}</div>`
+    : l.estado === 'vencida'
+      ? `<div class="alert warn" style="margin:0">${esc(l.mensaje)} Titular: ${esc(l.titular)}. Pedí la renovación para seguir registrado.</div>`
+      : `<div class="alert warn" style="margin:0">Versión sin registrar. Si compraste una licencia, pegá la clave abajo.</div>`;
+  document.getElementById('btn-quitar-lic').hidden = l.estado === 'sin_licencia';
+  document.getElementById('chk-act').checked = C.buscar_actualizaciones !== false;
+}
+document.getElementById('f-lic').addEventListener('submit', async ev => {
+  ev.preventDefault();
+  try {
+    const r = await api('/licencia', { method: 'PUT', body: { clave: ev.target.clave.value } });
+    ev.target.reset(); toast(r.leyenda); C = await api('/config'); pintarLicencia();
+  } catch (e) { toast(e.message, true); }
+});
+async function quitarLicencia() {
+  if (!confirm('¿Quitar la licencia de esta PC?')) return;
+  await api('/licencia', { method: 'DELETE' }); C = await api('/config'); pintarLicencia(); toast('Licencia quitada');
+}
+document.getElementById('chk-act').addEventListener('change', ev =>
+  guardar({ buscar_actualizaciones: ev.target.checked }, ev.target.checked ? 'Se avisará cuando haya una versión nueva' : 'Aviso de versiones desactivado'));
 async function guardar(d, msg) {
   try { C = await api('/config', { method: 'PUT', body: { ...C, ...d } }); toast(msg); return true; }
   catch (e) { toast(e.message, true); return false; }
