@@ -6,9 +6,11 @@ Solo lee datos públicos (no envía ningún dato del usuario) y se puede desacti
 """
 from __future__ import annotations
 
+import json
 import time
+import urllib.request
 
-from . import __version__, red
+from . import __version__
 
 REPO = "edumor/presupuestos-proyectos"
 URL_API = f"https://api.github.com/repos/{REPO}/releases/latest"
@@ -26,7 +28,10 @@ def version_tupla(v: str) -> tuple[int, ...]:
 
 
 def _get_json(url: str) -> dict:
-    return red.obtener_json(url, accept="application/vnd.github+json", agente=f"Presupuestos/{__version__}", timeout=5)
+    req = urllib.request.Request(url, headers={"Accept": "application/vnd.github+json",
+                                               "User-Agent": f"Presupuestos/{__version__}"})
+    with urllib.request.urlopen(req, timeout=5) as r:
+        return json.loads(r.read().decode("utf-8"))
 
 
 def consultar(forzar: bool = False) -> dict:

@@ -12,9 +12,10 @@ pide cotizaciones e índices públicos.
 from __future__ import annotations
 
 import json
+import ssl
+import urllib.error
+import urllib.request
 from datetime import date
-
-from . import red
 
 API = "https://api.bcra.gob.ar"
 ID_INFLACION_MENSUAL = 27  # "Inflación mensual." en Principales variables v4.0
@@ -25,17 +26,18 @@ class ErrorBCRA(Exception):
 
 
 def _get_json(url: str) -> dict:
+    req = urllib.request.Request(url, headers={"Accept": "application/json", "User-Agent": "Presupuestos"})
     try:
-        return red.obtener_json(url)
-    except red.ErrorHTTP as e:
+        with urllib.request.urlopen(req, timeout=20, context=ssl.create_default_context()) as r:
+            return json.loads(r.read().decode("utf-8"))
+    except urllib.error.HTTPError as e:
         try:
-            msg = "; ".join(json.loads(e.cuerpo.decode("utf-8")).get("errorMessages", [])) or f"error {e.status}"
+            msg = "; ".join(json.loads(e.read().decode("utf-8")).get("errorMessages", [])) or str(e)
         except Exception:
-            msg = f"error {e.status}"
+            msg = str(e)
         raise ErrorBCRA(f"El BCRA respondió: {msg}") from e
-    except red.ErrorRed as e:
-        raise ErrorBCRA(f"No se pudo conectar con el BCRA ({e}). Probá de nuevo en unos minutos o cargá el "
-                        "dato a mano; si sigue pasando, mirá la sección «Problemas frecuentes» del manual.") from e
+    except (urllib.error.URLError, TimeoutError, OSError) as e:
+        raise ErrorBCRA("No se pudo conectar con el BCRA. Revisá la conexión a internet o cargá el dato a mano.") from e
 
 
 def cotizaciones(fecha: date | None = None) -> tuple[date, dict[str, float]]:
