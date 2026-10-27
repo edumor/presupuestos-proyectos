@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Cotizaciones · Presupuestos</title>
+  <link rel="stylesheet" href="assets/app.css">
+</head>
+<body>
+<main>
+  <h1>Cotizaciones</h1>
+  <p class="sub" id="sub">Cuánto vale cada moneda en la moneda base. Cargalas cuando cambien; cada hora y cada tarea guarda la que usó.</p>
+  <div class="grid g2">
+    <div class="card">
+      <h2>Cargar cotización del día</h2>
+      <form id="f-cot">
+        <div class="fields" id="campos" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr))"><label>Fecha<input name="fecha" type="date" required id="fecha"></label></div>
+        <div class="actions" style="justify-content:flex-start"><button class="primary">Guardar</button></div>
+      </form>
+      <p class="small muted">Completá solo las monedas que uses. Si ya había una cotización para esa fecha y moneda, se reemplaza.</p>
+    </div>
+    <div class="card">
+      <h2 style="display:flex;justify-content:space-between;gap:8px;align-items:center">Evolución <select id="g-moneda" style="font-weight:400"></select></h2>
+      <div class="chart-box" style="height:220px"><canvas id="g-cot"></canvas></div>
+    </div>
+  </div>
+  <div class="card" style="margin-top:16px">
+    <h2>Historial</h2>
+    <table><thead><tr><th>Fecha</th><th>Moneda</th><th class="num" id="th-valor">1 unidad =</th><th class="num" id="th-inv">1 base =</th><th></th></tr></thead><tbody id="tabla"></tbody></table>
+  </div>
+</main>
+<script src="assets/vendor/chart.umd.min.js"></script>
+<script src="assets/app.js"></script>
+<script>
+let grafico, COTS = [];
+const otras = () => Object.keys(MONEDAS).filter(m => m !== BASE);
+
+async function iniciar() {
+  await CFG_LISTA;
+  document.getElementById('sub').textContent = `Cuánto vale 1 unidad de cada moneda en ${BASE} (${MONEDAS[BASE] || BASE}), la moneda base. `
+    + 'Cargalas cuando cambien; cada hora y cada tarea guarda la que usó.';
+  document.getElementById('campos').insertAdjacentHTML('beforeend', otras().map(m =>
+    `<label>1 ${m} = … ${BASE}<input name="${m}" type="number" step="any" min="0" placeholder="${MONEDAS[m] || m}"></label>`).join(''));
+  document.getElementById('fecha').value = hoyISO();
+  document.getElementById('th-valor').textContent = `1 unidad = … ${BASE}`;
+  document.getElementById('th-inv').textContent = `1 ${BASE} = … unidades`;
+  const sel = document.getElementById('g-moneda');
+  sel.innerHTML = otras().map(m => `<option>${m}</option>`).join('');
+  sel.onchange = pintarGrafico;
+  cargar();
+}
+
+async function cargar() {
+  COTS = await api('/cotizaciones?limite=400');
+  document.getElementById('tabla').innerHTML = COTS.map(c => `<tr><td>${fmtFecha(c.fecha)}</td><td>${c.moneda}</td>
+    <td class="num">${fmtNum(c.valor, 4)} ${BASE}</td><td class="num">${fmtNum(c.inversa, 6)} ${c.moneda}</td>
+    <td class="num"><button class="link danger" onclick="borrar(${c.id})">Borrar</button></td></tr>`).join('')
+    || '<tr><td colspan="5" class="muted">Sin cotizaciones cargadas.</td></tr>';
+  const sel = document.getElementById('g-moneda');
+  if (!COTS.some(c => c.moneda === sel.value) && COTS.length) sel.value = COTS[0].moneda;
+  pintarGrafico();
+}
+
+function pintarGrafico() {
+  const m = document.getElementById('g-moneda').value;
+  const serie = COTS.filter(c => c.moneda === m).sort((a, b) => a.fecha < b.fecha ? -1 : 1);
+  if (grafico) grafico.destroy();
+  grafico = new Chart(document.getElementById('g-cot'), {
+    type: 'line',
+    data: { labels: serie.map(c => fmtFecha(c.fecha)), datasets: [
+      { label: `1 ${m} en ${BASE}`, data: serie.map(c => c.valor), borderColor: COLORES.acento, backgroundColor: COLORES.acento, tension: .2 } ] },
+    options: { maintainAspectRatio: false, plugins: { tooltip: { callbacks: { label: c => `1 ${m} = ${fmtNum(c.raw, 4)} ${BASE}` } } } }
+  });
+}
+
+document.getElementById('f-cot').addEventListener('submit', async ev => {
+  ev.preventDefault();
+  const f = ev.target, fecha = f.fecha.value;
+  const llenas = otras().filter(m => f[m] && f[m].value);
+  if (!llenas.length) return toast('Cargá al menos una moneda', true);
+  try {
+    await Promise.all(llenas.map(m => api('/cotizaciones', { method: 'POST', body: { fecha, moneda: m, valor: Number(f[m].value) } })));
+    toast('Cotización guardada'); llenas.forEach(m => f[m].value = ''); cargar();
+  } catch (e) { toast(e.message, true); }
+});
+async function borrar(id) {
+  if (!confirm('¿Borrar esta cotización?')) return;
+  await api(`/cotizaciones/${id}`, { method: 'DELETE' }); cargar();
+}
+iniciar();
+</script>
+</body>
+</html>

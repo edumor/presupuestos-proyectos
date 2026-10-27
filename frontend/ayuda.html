@@ -1,0 +1,660 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ayuda · Presupuestos</title>
+  <link rel="stylesheet" href="assets/app.css">
+  <style>
+.manual { display: grid; grid-template-columns: 240px 1fr; gap: 32px; align-items: start; }
+.manual nav.indice { position: sticky; top: 16px; font-size: 13px; max-height: calc(100vh - 32px); overflow: auto; }
+.manual nav.indice a { display: block; color: var(--muted); text-decoration: none; padding: 4px 8px; border-radius: 4px; }
+.manual nav.indice a:hover { background: var(--accent-soft); color: var(--accent); }
+.manual nav.indice a.n3 { padding-left: 20px; font-size: 12.5px; }
+.contenido { background: #fff; border: 1px solid var(--line); border-radius: 8px; padding: 32px 40px; line-height: 1.6; font-size: 14.5px; max-width: 860px; }
+.contenido h2 { font-size: 20px; margin: 36px 0 12px; padding-top: 12px; border-top: 1px solid var(--line); }
+.contenido h2:first-of-type { border-top: none; margin-top: 8px; }
+.contenido h3 { font-size: 16px; margin: 24px 0 8px; }
+.contenido table { margin: 12px 0 18px; font-size: 13.5px; }
+.contenido td, .contenido th { border-bottom: 1px solid var(--line); }
+.contenido figure { margin: 16px 0 24px; }
+.contenido figure img { max-width: 100%; border: 1px solid var(--line); border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+.contenido figcaption { font-size: 12px; color: var(--muted); margin-top: 6px; }
+.contenido code { background: #f2f4f7; padding: 1px 5px; border-radius: 4px; font-size: 12.5px; }
+.contenido li { margin: 4px 0; }
+@media (max-width: 900px) { .manual { grid-template-columns: 1fr; } .manual nav.indice { position: static; } .contenido { padding: 20px; } }
+</style>
+</head>
+<body>
+<main style="max-width:1180px">
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap">
+    <div><h1>Ayuda</h1><p class="sub">Manual de uso — Presupuestos y seguimiento de proyectos · versión 0.5.0</p></div>
+    <a href="manual.pdf" download><button>Descargar el manual en PDF</button></a>
+  </div>
+  <div class="manual">
+    <nav class="indice"><a class="n2" href="#1-que-hace-el-programa">1. Qué hace el programa</a><a class="n2" href="#2-instalacion">2. Instalación</a><a class="n3" href="#abrir-y-cerrar-el-programa">Abrir y cerrar el programa</a><a class="n3" href="#primera-vez-datos-de-ejemplo">Primera vez: datos de ejemplo</a><a class="n2" href="#3-recorrido-por-las-pantallas">3. Recorrido por las pantallas</a><a class="n2" href="#4-puesta-en-marcha-una-sola-vez">4. Puesta en marcha (una sola vez)</a><a class="n3" href="#41-borrar-los-datos-de-ejemplo">4.1 Borrar los datos de ejemplo</a><a class="n3" href="#42-elegir-la-moneda-base">4.2 Elegir la moneda base</a><a class="n3" href="#43-cargar-los-datos-y-el-logo-de-la-empresa">4.3 Cargar los datos y el logo de la empresa</a><a class="n3" href="#44-revisar-los-parametros">4.4 Revisar los parámetros</a><a class="n3" href="#45-cargar-las-cotizaciones">4.5 Cargar las cotizaciones</a><a class="n3" href="#46-cargar-el-equipo">4.6 Cargar el equipo</a><a class="n3" href="#47-cargar-los-gastos-fijos">4.7 Cargar los gastos fijos</a><a class="n3" href="#48-cargar-el-catalogo-de-servicios">4.8 Cargar el catálogo de servicios</a><a class="n2" href="#5-crear-un-proyecto">5. Crear un proyecto</a><a class="n3" href="#la-plantilla-de-etapas">La plantilla de etapas</a><a class="n3" href="#51-armar-el-presupuesto">5.1 Armar el presupuesto</a><a class="n2" href="#6-planificar-el-proyecto">6. Planificar el proyecto</a><a class="n3" href="#61-ajustar-las-etapas">6.1 Ajustar las etapas</a><a class="n3" href="#62-cargar-las-tareas">6.2 Cargar las tareas</a><a class="n3" href="#63-gastos-externos-previstos">6.3 Gastos externos previstos</a><a class="n2" href="#7-seguimiento-semana-a-semana">7. Seguimiento semana a semana</a><a class="n3" href="#71-cargar-las-horas">7.1 Cargar las horas</a><a class="n3" href="#72-actualizar-el-avance-de-las-tareas">7.2 Actualizar el avance de las tareas</a><a class="n3" href="#73-registrar-gastos-reales">7.3 Registrar gastos reales</a><a class="n3" href="#74-cerrar-etapas-hitos-y-aprobaciones">7.4 Cerrar etapas, hitos y aprobaciones</a><a class="n3" href="#75-rutina-recomendada">7.5 Rutina recomendada</a><a class="n2" href="#8-como-leer-los-tableros">8. Cómo leer los tableros</a><a class="n3" href="#81-los-indicadores-de-un-proyecto">8.1 Los indicadores de un proyecto</a><a class="n3" href="#82-etapas-y-cronograma">8.2 Etapas y cronograma</a><a class="n3" href="#83-curva-s-y-costo-por-persona">8.3 Curva S y costo por persona</a><a class="n3" href="#84-cartera-de-proyectos">8.4 Cartera de proyectos</a><a class="n3" href="#85-carga-del-equipo">8.5 Carga del equipo</a><a class="n2" href="#9-exportar-documentos-y-dashboards">9. Exportar documentos y dashboards</a><a class="n3" href="#91-para-el-cliente-en-espanol-o-ingles-sin-costos">9.1 Para el cliente (en español o inglés, sin costos)</a><a class="n3" href="#92-para-uso-interno">9.2 Para uso interno</a><a class="n3" href="#93-los-dashboards-en-html">9.3 Los dashboards en HTML</a><a class="n2" href="#10-respaldos-y-datos">10. Respaldos y datos</a><a class="n2" href="#11-actualizaciones">11. Actualizaciones</a><a class="n2" href="#12-problemas-frecuentes">12. Problemas frecuentes</a><a class="n2" href="#13-glosario">13. Glosario</a><a class="n2" href="#14-licencia-y-autoria">14. Licencia y autoría</a></nav>
+    <article class="contenido"><p>Este manual explica cómo instalar el programa, cargar los datos de tu empresa y seguir cada proyecto hasta su cierre. Está pensado para leerse en orden la primera vez y después usarse como consulta.</p>
+<h2 id="1-que-hace-el-programa">1. Qué hace el programa</h2>
+<p>El programa responde tres preguntas sobre cada proyecto:</p>
+<ul>
+<li><strong>¿Cuánto nos cuesta cada hora de trabajo?</strong> Suma lo que cobra cada persona (sueldo o tarifa) más una parte de los gastos fijos de la empresa.</li>
+<li><strong>¿Vamos en tiempo?</strong> Compara lo que debería estar hecho a hoy con lo que realmente está hecho.</li>
+<li><strong>¿Vamos a ganar lo que esperábamos?</strong> Compara lo gastado con lo que vale el trabajo hecho y proyecta el margen final.</li>
+</ul>
+<p>Todo funciona en tu computadora, sin internet. Los importes se calculan en una <strong>moneda base</strong> que se elige al empezar: por defecto, <strong>pesos argentinos (ARS)</strong>. Los sueldos, tarifas o gastos en otra moneda (dólares, euros, reales…) se convierten con las cotizaciones que cargás, y las propuestas pueden mostrar también el <strong>equivalente en dólares (USD)</strong>.</p>
+<h2 id="2-instalacion">2. Instalación</h2>
+<ol>
+<li>Abrí el instalador <strong>Presupuestos-Setup-0.5.0.exe</strong> (el número cambia con cada versión).</li>
+<li>Windows puede mostrar el aviso <strong>"Windows protegió su PC"</strong>, porque el programa no tiene firma digital comercial. Hacé clic en <strong>Más información</strong> y después en <strong>Ejecutar de todos modos</strong>. Es un aviso normal para programas sin firma comercial.</li>
+<li>Seguí el asistente: <strong>Siguiente → Instalar → Finalizar</strong>. No pide contraseña de administrador.</li>
+<li>Al terminar queda un acceso directo <strong>Presupuestos</strong> en el escritorio y en el menú Inicio. En el menú Inicio también encontrás este manual y la carpeta de datos.</li>
+</ol>
+<h3 id="abrir-y-cerrar-el-programa">Abrir y cerrar el programa</h3>
+<ul>
+<li>Doble clic en <strong>Presupuestos</strong>. Se abre una <strong>ventana negra</strong> y, a los pocos segundos, el programa en tu navegador (Chrome, Edge, etc.).</li>
+<li><strong>La ventana negra tiene que quedar abierta mientras uses el programa.</strong> Podés minimizarla.</li>
+<li>Para salir, cerrá la ventana negra. Lo que cargaste ya quedó guardado: no hay botón "Guardar" general.</li>
+<li>Si hacés doble clic en el acceso directo con el programa ya abierto, simplemente se abre otra pestaña del navegador.</li>
+<li>Conviene guardar la dirección <strong>http://127.0.0.1:8765/</strong> en los favoritos del navegador, pero el programa tiene que estar abierto para que funcione.</li>
+</ul>
+<h3 id="primera-vez-datos-de-ejemplo">Primera vez: datos de ejemplo</h3>
+<p>La primera vez el programa abre con <strong>datos de ejemplo</strong> de una agencia argentina ficticia: un equipo (Ana, Bruno, Carla…) con sueldos y tarifas en pesos, costos fijos en pesos y una licencia en dólares, cotizaciones y dos proyectos en curso. Los valores son de referencia (octubre de 2026) y sirven para recorrer las pantallas y practicar sin miedo. Cuando quieras cargar los datos reales, borralos desde <strong>Configuración → Borrar datos de ejemplo</strong> (ver sección 4).</p>
+<figure><img alt="Pantalla de inicio" src="assets/manual/01_inicio.png"><figcaption>Pantalla de inicio</figcaption></figure>
+<h2 id="3-recorrido-por-las-pantallas">3. Recorrido por las pantallas</h2>
+<p>El menú superior tiene estas secciones:</p>
+<table>
+<thead>
+<tr>
+<th>Sección</th>
+<th>Para qué sirve</th>
+<th>¿Cada cuánto se usa?</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Inicio</strong></td>
+<td>Resumen: proyectos en curso, costo por hora y cotizaciones</td>
+<td>Cada vez que abrís</td>
+</tr>
+<tr>
+<td><strong>Proyectos</strong></td>
+<td>Cartera de proyectos y acceso a cada uno</td>
+<td>Varias veces por semana</td>
+</tr>
+<tr>
+<td><strong>Horas</strong></td>
+<td>Planilla semanal para cargar las horas de cada persona</td>
+<td>Una vez por semana (o a diario)</td>
+</tr>
+<tr>
+<td><strong>Equipo</strong></td>
+<td>Personas, su costo por hora y la carga de trabajo semanal</td>
+<td>Al sumar o cambiar personas</td>
+</tr>
+<tr>
+<td><strong>Estructura</strong></td>
+<td>Gastos fijos de la empresa</td>
+<td>Cuando cambia un gasto fijo</td>
+</tr>
+<tr>
+<td><strong>Servicios</strong></td>
+<td>Catálogo de lo que vendés, para armar presupuestos</td>
+<td>Al empezar y cuando sumás un servicio</td>
+</tr>
+<tr>
+<td><strong>Cotizaciones</strong></td>
+<td>Cuánto vale cada moneda (dólar, euro…) en la moneda base</td>
+<td>Cuando cambia el tipo de cambio</td>
+</tr>
+<tr>
+<td><strong>Configuración</strong></td>
+<td>Datos y logo de la empresa, moneda base, parámetros y datos de ejemplo</td>
+<td>Al empezar; después, rara vez</td>
+</tr>
+</tbody>
+</table>
+<p>En casi todas las pantallas hay íconos <strong>?</strong>: pasá el mouse por encima para ver una explicación del número.</p>
+<h2 id="4-puesta-en-marcha-una-sola-vez">4. Puesta en marcha (una sola vez)</h2>
+<p>Hacelo en este orden, porque cada paso usa los datos del anterior.</p>
+<h3 id="41-borrar-los-datos-de-ejemplo">4.1 Borrar los datos de ejemplo</h3>
+<p><strong>Configuración → Borrar datos de ejemplo.</strong> Se borran las personas, costos fijos, servicios, clientes y proyectos de ejemplo. Quedan los roles y las cotizaciones.</p>
+<h3 id="42-elegir-la-moneda-base">4.2 Elegir la moneda base</h3>
+<p>En <strong>Configuración → Moneda base</strong> está la moneda en la que se calculan todos los costos y precios. Por defecto es <strong>ARS (peso argentino)</strong>; también se puede elegir USD, EUR, GBP, BRL, CLP, UYU o MXN.</p>
+<ul>
+<li>La moneda base <strong>solo se puede cambiar mientras no haya datos cargados</strong> (equipo, estructura, proyectos ni cotizaciones), porque todos los importes guardados están en esa moneda. Si querés otra base, borrá primero los datos de ejemplo y las cotizaciones (en <strong>Cotizaciones</strong>, botón <strong>Borrar</strong> de cada fila).</li>
+<li>Las demás monedas no se pierden: se convierten con las cotizaciones (sección 4.5).</li>
+</ul>
+<h3 id="43-cargar-los-datos-y-el-logo-de-la-empresa">4.3 Cargar los datos y el logo de la empresa</h3>
+<p>En <strong>Configuración → Datos de la empresa</strong> completá lo que quieras mostrar a tus clientes. Todos los campos son opcionales:</p>
+<table>
+<thead>
+<tr>
+<th>Campo</th>
+<th>Ejemplo</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Nombre o razón social</td>
+<td>Agencia Demo S.R.L.</td>
+</tr>
+<tr>
+<td>Domicilio (calle y número)</td>
+<td>Av. Corrientes 1234, piso 5</td>
+</tr>
+<tr>
+<td>Localidad, provincia, código postal y país</td>
+<td>CABA, Buenos Aires, C1043, Argentina</td>
+</tr>
+<tr>
+<td>Teléfonos</td>
+<td>+54 11 5555-0000</td>
+</tr>
+<tr>
+<td>Email y página web</td>
+<td>hola@agenciademo.com.ar · www.agenciademo.com.ar</td>
+</tr>
+<tr>
+<td>CUIT / identificación fiscal</td>
+<td>30-00000000-0</td>
+</tr>
+<tr>
+<td>Validez de la propuesta</td>
+<td>30 días</td>
+</tr>
+<tr>
+<td>Condiciones</td>
+<td>Forma de pago, cambios de alcance, impuestos. Se imprimen al final de la propuesta tal como las escribas, así que conviene escribirlas en el idioma en que vas a enviar la propuesta</td>
+</tr>
+</tbody>
+</table>
+<p>Con <strong>Guardar datos de la empresa</strong> el nombre aparece arriba a la izquierda del programa y en el encabezado de propuestas, informes y dashboards.</p>
+<p><strong>Logo (opcional).</strong> Elegí un archivo PNG o JPG de hasta 2 MB. Se muestra a la izquierda de la barra superior del programa y de los dashboards en HTML. Las propuestas e informes en PDF y Excel no llevan logo: llevan los datos de la empresa. Si no cargás logo, la barra muestra solo el nombre. Con <strong>Quitar logo</strong> se elimina.</p>
+<figure><img alt="Configuración" src="assets/manual/02_configuracion.png"><figcaption>Configuración</figcaption></figure>
+<h3 id="44-revisar-los-parametros">4.4 Revisar los parámetros</h3>
+<p>En <strong>Configuración → Parámetros de costeo</strong>:</p>
+<table>
+<thead>
+<tr>
+<th>Parámetro</th>
+<th>Qué es</th>
+<th>Valor de referencia</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Horas anuales por empleado</td>
+<td>Horas de trabajo en el año de un empleado de jornada completa</td>
+<td>1.760</td>
+</tr>
+<tr>
+<td>Utilización</td>
+<td>Qué parte de esas horas se factura a clientes (el resto son reuniones internas, capacitación, vacaciones)</td>
+<td>65% a 80%</td>
+</tr>
+<tr>
+<td>Contribuciones patronales</td>
+<td>Cargas sociales que paga la empresa sobre el sueldo bruto (jubilación, PAMI, asignaciones familiares, fondo de empleo y obra social) más la ART</td>
+<td>26,4% + ART ≈ 28,4% (pymes con certificado: 24% + ART)</td>
+</tr>
+<tr>
+<td>Horas anuales de autónomos</td>
+<td>Cuántas horas estimás que facturan los autónomos en el año entre todos</td>
+<td>según la empresa</td>
+</tr>
+<tr>
+<td>Margen objetivo</td>
+<td>Ganancia buscada sobre el precio</td>
+<td>35%</td>
+</tr>
+<tr>
+<td>Alerta si el margen baja de</td>
+<td>Debajo de este margen los números se ponen en naranja</td>
+<td>25%</td>
+</tr>
+<tr>
+<td>Impuesto por defecto</td>
+<td>Solo un % que se suma al precio (por ejemplo, IVA). Qué impuesto corresponde lo define el contador</td>
+<td>0%</td>
+</tr>
+<tr>
+<td>Zona horaria</td>
+<td>Tu zona horaria</td>
+<td>America/Argentina/Buenos_Aires</td>
+</tr>
+</tbody>
+</table>
+<p>Los porcentajes de contribuciones son orientativos: la alícuota exacta y la de la ART dependen de la actividad, el tamaño de la empresa y la póliza. Confirmalos con tu contador.</p>
+<h3 id="45-cargar-las-cotizaciones">4.5 Cargar las cotizaciones</h3>
+<p><strong>Cotizaciones</strong>: escribí cuánto vale <strong>1 unidad de cada moneda en la moneda base</strong> (por ejemplo, 1 USD = 1.540 ARS) y guardá. Completá solo las monedas que uses.</p>
+<ul>
+<li>Sin cotización, el programa no puede calcular el costo de una persona o un gasto en esa moneda, ni mostrar la propuesta en dólares, y te lo avisa.</li>
+<li><strong>Para cambiar el tipo de cambio</strong>, cargá la nueva cotización con su fecha. Si ya había una para esa fecha y moneda, se reemplaza. Desde esa fecha se usa la nueva; las horas y tareas ya cargadas conservan el valor con el que se registraron.</li>
+<li>El gráfico <strong>Evolución</strong> muestra cómo cambió cada moneda; elegila en el selector.</li>
+</ul>
+<figure><img alt="Cotizaciones" src="assets/manual/03_cotizaciones.png"><figcaption>Cotizaciones</figcaption></figure>
+<h3 id="46-cargar-el-equipo">4.6 Cargar el equipo</h3>
+<p><strong>Equipo → + Persona.</strong> Por cada persona:</p>
+<ul>
+<li><strong>Empleado</strong> (en relación de dependencia): <strong>sueldo bruto anual con aguinaldo</strong> (13 sueldos) y, si es distinto del general, el % de contribuciones patronales.</li>
+<li><strong>Autónomo</strong> (monotributista o freelance): tarifa por hora que le factura a la empresa.</li>
+<li><strong>Moneda</strong> en la que cobra (por defecto, la moneda base) y su <strong>rol</strong>. Con el botón <strong>Roles</strong> podés crear o borrar roles.</li>
+</ul>
+<p>La tabla muestra el <strong>costo total por hora en la moneda base</strong> de cada persona: su costo directo más la parte de gastos fijos (estructura). El <strong>?</strong> junto al costo directo muestra la cuenta completa.</p>
+<figure><img alt="Equipo" src="assets/manual/04_equipo.png"><figcaption>Equipo</figcaption></figure>
+<h3 id="47-cargar-los-gastos-fijos">4.7 Cargar los gastos fijos</h3>
+<p><strong>Estructura</strong>: cargá los gastos que no se cobran por separado a un cliente (software y licencias, oficina o coworking, servicios, estudio contable, horas de administración). Pueden ser mensuales o anuales y en cualquier moneda. El programa calcula la <strong>tasa de estructura</strong>: cuánto gasto fijo, en la moneda base, le corresponde a cada hora facturable.</p>
+<figure><img alt="Estructura" src="assets/manual/05_estructura.png"><figcaption>Estructura</figcaption></figure>
+<h3 id="48-cargar-el-catalogo-de-servicios">4.8 Cargar el catálogo de servicios</h3>
+<p><strong>Servicios</strong> es la lista de lo que vendés: auditoría SEO, gestión de redes, landing page, etc. Por cada servicio cargá:</p>
+<ul>
+<li><strong>Rol sugerido</strong>: quién lo hace habitualmente. El presupuesto usa el costo promedio por hora de las personas activas con ese rol.</li>
+<li><strong>Horas sugeridas</strong>, o bien un <strong>% sobre el total</strong> para servicios que dependen del tamaño del proyecto (por ejemplo, "Reuniones y gestión" = 10% de las horas de los demás ítems).</li>
+<li><strong>Etapa sugerida</strong>: la etapa del proyecto donde va (Inicio, Planificación, Ejecución, Cierre u otra).</li>
+</ul>
+<p>La tabla muestra el <strong>costo estimado</strong> y el <strong>precio sugerido</strong> de cada servicio con el margen objetivo. Un servicio que ya se usó en presupuestos no se borra: queda inactivo.</p>
+<figure><img alt="Catálogo de servicios" src="assets/manual/20_servicios.png"><figcaption>Catálogo de servicios</figcaption></figure>
+<h2 id="5-crear-un-proyecto">5. Crear un proyecto</h2>
+<p><strong>Proyectos → + Proyecto.</strong> Completá nombre, cliente (con <strong>+ Cliente</strong> creás uno nuevo), fecha de inicio y de fin, y, si ya lo tenés acordado, el <strong>precio</strong> en la moneda base. Si todavía lo estás cotizando, dejalo vacío, poné el estado <strong>En presupuesto</strong> y armá el presupuesto (sección 5.1): al aprobarlo, el precio se completa solo. Dentro del proyecto, junto al precio, se ve su <strong>equivalente en dólares</strong> con la cotización vigente. Dejá tildado <strong>Crear etapas desde la plantilla</strong>: el proyecto nace con las etapas Inicio, Planificación, Ejecución y Cierre, con fechas repartidas a lo largo del plazo.</p>
+<figure><img alt="Nuevo proyecto" src="assets/manual/07_nuevo_proyecto.png"><figcaption>Nuevo proyecto</figcaption></figure>
+<h3 id="la-plantilla-de-etapas">La plantilla de etapas</h3>
+<p><strong>Proyectos → Plantilla de etapas</strong> define las etapas con las que nace cada proyecto nuevo. Cambiarla no afecta a los proyectos que ya existen.</p>
+<ul>
+<li><strong>Peso %</strong>: cuánto cuenta la etapa en el avance total. Con Ejecución al 55%, terminar la ejecución representa más de la mitad del proyecto.</li>
+<li><strong>Duración %</strong>: qué parte del plazo ocupa la etapa; con eso se sugieren sus fechas.</li>
+<li><strong>Hito de cierre</strong>: el entregable que marca el fin de la etapa (por ejemplo, "Plan y calendario aprobados").</li>
+</ul>
+<p>Lo ideal es que pesos y duraciones sumen 100% cada uno; la pantalla te muestra la suma.</p>
+<figure><img alt="Plantilla de etapas" src="assets/manual/08_plantilla.png"><figcaption>Plantilla de etapas</figcaption></figure>
+<h3 id="51-armar-el-presupuesto">5.1 Armar el presupuesto</h3>
+<p>En el proyecto, pestaña <strong>Presupuesto → + Nueva versión</strong>. Si el proyecto está "En presupuesto", el programa abre directamente esta pestaña.</p>
+<ol>
+<li>Agregá ítems con <strong>Agregar desde el catálogo…</strong> (trae actividad, etapa, rol y horas del servicio) o con <strong>+ Ítem libre</strong>.</li>
+<li>Ajustá cada ítem: etapa, actividad, rol, <strong>responsable</strong> (opcional: si lo elegís se usa su costo; si no, el promedio del rol), horas o % sobre el total, y <strong>costo por hora</strong> si querés fijarlo a mano.</li>
+<li>Cargá los <strong>gastos externos</strong> previstos (licencias, hosting, impresión) en cualquier moneda.</li>
+<li>Revisá el <strong>margen objetivo</strong> y el <strong>impuesto</strong>. El <strong>precio sugerido</strong> sale de costo ÷ (1 − margen); si querés redondearlo o hacer un descuento, escribí el <strong>precio final</strong> y el resumen muestra el <strong>margen real</strong> resultante y su equivalente en dólares.</li>
+</ol>
+<p>Todo se guarda solo a medida que escribís. Si un ítem queda "sin costo" (por ejemplo, un rol sin personas), el programa lo avisa y no deja aprobar.</p>
+<figure><img alt="Presupuesto" src="assets/manual/21_presupuesto.png"><figcaption>Presupuesto</figcaption></figure>
+<p><strong>Versiones y estados</strong></p>
+<table>
+<thead>
+<tr>
+<th>Estado</th>
+<th>Qué significa</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Borrador</td>
+<td>Se puede modificar</td>
+</tr>
+<tr>
+<td>Enviado</td>
+<td>Se envió al cliente; ya no se modifica. Para cambiarlo, <strong>Nueva versión desde esta</strong></td>
+</tr>
+<tr>
+<td>Aprobado</td>
+<td>El cliente lo aceptó (ver abajo)</td>
+</tr>
+<tr>
+<td>Rechazado</td>
+<td>Descartado. Al aprobar una versión, las demás abiertas pasan a rechazadas</td>
+</tr>
+</tbody>
+</table>
+<p>Con <strong>Propuesta para el cliente</strong> descargás la propuesta de esa versión en PDF o Excel, en español o inglés y, si querés, con el equivalente en dólares. Agrupa los ítems por etapa y, como siempre, no muestra costos, márgenes ni personas.</p>
+<p><strong>Aprobar.</strong> Al aprobar una versión:</p>
+<ul>
+<li>se <strong>congelan</strong> sus costos por hora, la tasa de estructura, el costo y el precio (aunque después cambien sueldos o cotizaciones);</li>
+<li>el precio, el margen y el impuesto pasan al proyecto, que queda <strong>En curso</strong>;</li>
+<li>se crean las <strong>tareas</strong> del proyecto en cada etapa, con sus horas y costos, y los gastos externos previstos;</li>
+<li>solo puede haber una versión aprobada por proyecto. Los cambios de alcance posteriores se cargan como tareas nuevas en el proyecto.</li>
+</ul>
+<h2 id="6-planificar-el-proyecto">6. Planificar el proyecto</h2>
+<p>Entrá al proyecto desde <strong>Proyectos</strong> (clic en su fila) y abrí la pestaña <strong>Etapas y tareas</strong>.</p>
+<h3 id="61-ajustar-las-etapas">6.1 Ajustar las etapas</h3>
+<p>Clic en <strong>editar etapa</strong> (o en la tarjeta de la etapa en <strong>Resumen</strong>) para cambiar nombre, peso, fechas previstas o hito. Con <strong>+ Etapa</strong> agregás otra; al borrar una etapa, sus tareas quedan "sin etapa", no se pierden.</p>
+<h3 id="62-cargar-las-tareas">6.2 Cargar las tareas</h3>
+<p><strong>+ Tarea</strong> y completá:</p>
+<ul>
+<li><strong>Etapa</strong> a la que pertenece y <strong>responsable</strong>.</li>
+<li><strong>Inicio y fin previstos</strong> y <strong>horas previstas</strong>.</li>
+<li><strong>Costo por hora</strong>: dejalo vacío y se toma el del responsable. Ese costo <strong>queda fijo en la tarea</strong>: si después cambia el sueldo de la persona o el tipo de cambio, lo planificado no se mueve.</li>
+</ul>
+<p>El costo previsto de la tarea es horas × costo por hora. La suma de todas las tareas es el <strong>costo previsto del proyecto</strong>.</p>
+<figure><img alt="Nueva tarea" src="assets/manual/15_dlg_tarea.png"><figcaption>Nueva tarea</figcaption></figure>
+<h3 id="63-gastos-externos-previstos">6.3 Gastos externos previstos</h3>
+<p>Si el proyecto necesita compras (imágenes, licencias, impresión), cargalas en <strong>Horas y gastos → Gastos externos</strong> con tipo <strong>Previsto</strong>. Se suman al costo previsto.</p>
+<h2 id="7-seguimiento-semana-a-semana">7. Seguimiento semana a semana</h2>
+<h3 id="71-cargar-las-horas">7.1 Cargar las horas</h3>
+<p>La forma más rápida es la pantalla <strong>Horas</strong>: elegí la persona y la semana, escribí las horas de cada día en cada tarea y apretá <strong>Guardar cambios</strong>. Las celdas modificadas se ven celestes hasta guardar.</p>
+<ul>
+<li>Aparecen las tareas de las que la persona es responsable en esa semana. Para cargar en otra, tildá <strong>Mostrar todas las tareas activas</strong>.</li>
+<li>Para dejar un día en cero, borrá el número y guardá.</li>
+<li>Cada hora se valora con el costo de la persona en la fecha trabajada (con la cotización de ese día).</li>
+</ul>
+<figure><img alt="Planilla semanal de horas" src="assets/manual/17_planilla.png"><figcaption>Planilla semanal de horas</figcaption></figure>
+<p>También podés cargar horas sueltas desde el proyecto, en <strong>Horas y gastos → Cargar horas</strong>.</p>
+<h3 id="72-actualizar-el-avance-de-las-tareas">7.2 Actualizar el avance de las tareas</h3>
+<p>En <strong>Etapas y tareas</strong>, columna <strong>Avance %</strong>, escribí cuánto está hecho cada tarea (0 a 100) y salí de la casilla: se guarda solo.</p>
+<ul>
+<li>Si lo dejás <strong>vacío</strong>, el programa lo calcula como horas reales ÷ horas previstas (aparece "auto"). Es una aproximación: si una tarea consumió todas sus horas pero está a medio hacer, conviene cargar el % real.</li>
+<li>Cada cambio queda registrado con su fecha; así el programa puede dibujar cómo evolucionó el proyecto.</li>
+</ul>
+<figure><img alt="Tareas" src="assets/manual/14_tareas.png"><figcaption>Tareas</figcaption></figure>
+<h3 id="73-registrar-gastos-reales">7.3 Registrar gastos reales</h3>
+<p>En <strong>Horas y gastos → Gastos externos</strong>, con tipo <strong>Real</strong>, cargá lo que efectivamente se pagó. Si es en dólares u otra moneda, se convierte con la cotización de esa fecha.</p>
+<h3 id="74-cerrar-etapas-hitos-y-aprobaciones">7.4 Cerrar etapas, hitos y aprobaciones</h3>
+<p>Cuando una etapa termina, abrila (clic en su tarjeta) y completá:</p>
+<ul>
+<li><strong>Inicio real y fin real.</strong></li>
+<li><strong>Hito cumplido el</strong>: fecha en que se entregó el hito.</li>
+<li><strong>Aprobada por el cliente</strong> y su fecha.</li>
+</ul>
+<p>En el cronograma el rombo del hito se pinta de verde y la tarjeta muestra "Aprobada por el cliente".</p>
+<figure><img alt="Editar etapa" src="assets/manual/13_dlg_etapa.png"><figcaption>Editar etapa</figcaption></figure>
+<h3 id="75-rutina-recomendada">7.5 Rutina recomendada</h3>
+<table>
+<thead>
+<tr>
+<th>Cuándo</th>
+<th>Qué hacer</th>
+<th>Dónde</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Cuando cambia el tipo de cambio (o una vez por semana)</td>
+<td>Cargar la cotización</td>
+<td>Cotizaciones</td>
+</tr>
+<tr>
+<td>Cada viernes</td>
+<td>Cargar las horas de la semana de cada persona</td>
+<td>Horas</td>
+</tr>
+<tr>
+<td>Cada viernes</td>
+<td>Actualizar el % de avance de las tareas en curso</td>
+<td>Proyecto → Etapas y tareas</td>
+</tr>
+<tr>
+<td>Al pagar una compra</td>
+<td>Cargar el gasto real</td>
+<td>Proyecto → Horas y gastos</td>
+</tr>
+<tr>
+<td>Al terminar una etapa</td>
+<td>Fechas reales, hito cumplido, aprobación del cliente</td>
+<td>Proyecto → tarjeta de la etapa</td>
+</tr>
+<tr>
+<td>Cada semana</td>
+<td>Mirar la cartera: semáforos, margen proyectado, próximos hitos</td>
+<td>Proyectos</td>
+</tr>
+<tr>
+<td>Al cerrar un proyecto</td>
+<td>Cambiar el estado a Terminado y exportar el Excel</td>
+<td>Proyecto → Editar</td>
+</tr>
+</tbody>
+</table>
+<h2 id="8-como-leer-los-tableros">8. Cómo leer los tableros</h2>
+<h3 id="81-los-indicadores-de-un-proyecto">8.1 Los indicadores de un proyecto</h3>
+<figure><img alt="Indicadores del proyecto" src="assets/manual/09_proyecto_kpis.png"><figcaption>Indicadores del proyecto</figcaption></figure>
+<ul>
+<li><strong>Avance ponderado</strong>: cuánto del proyecto está hecho, sumando el avance de cada etapa según su peso. La <strong>línea negra</strong> sobre la barra marca lo que debería estar hecho a hoy según las fechas. Si la barra queda antes de la línea, el proyecto está atrasado y se pinta de naranja.</li>
+<li><strong>CPI (eficiencia en costo)</strong>: cuánto trabajo se obtiene por cada peso gastado. <strong>1,00</strong> = según lo previsto. <strong>0,80</strong> = por cada peso gastado se obtuvieron 80 centavos de trabajo planificado: se está gastando un 25% más de lo previsto.</li>
+<li><strong>SPI (eficiencia en plazo)</strong>: cuánto se avanzó respecto de lo planificado. <strong>0,87</strong> = se hizo el 87% de lo que debería estar hecho a hoy.</li>
+<li><strong>Margen proyectado</strong>: el margen que va a quedar si el proyecto sigue gastando al ritmo actual. Se compara con el <strong>margen previsto</strong> al planificar.</li>
+<li><strong>Próximo hito</strong>: el primer hito pendiente y su fecha prevista.</li>
+</ul>
+<p>Colores: <strong>verde</strong> = bien (índice ≥ 0,98 o margen sobre la alerta); <strong>naranja</strong> = atención (0,90 a 0,98, o margen bajo la alerta); <strong>rojo</strong> = problema (menor que 0,90, o margen negativo).</p>
+<h3 id="82-etapas-y-cronograma">8.2 Etapas y cronograma</h3>
+<p>Cada tarjeta de etapa muestra su avance contra lo planificado, el peso, las fechas, el hito y si el cliente la aprobó. El estado puede ser <strong>no iniciada, en curso, terminada</strong> o <strong>atrasada</strong> (la fecha de fin prevista ya pasó y no está terminada).</p>
+<figure><img alt="Etapas" src="assets/manual/10_etapas.png"><figcaption>Etapas</figcaption></figure>
+<p>El <strong>cronograma</strong> muestra cada etapa y sus tareas:</p>
+<ul>
+<li><strong>Barra celeste</strong>: el plazo previsto. <strong>Relleno azul</strong>: el avance. <strong>Relleno naranja</strong>: tarea vencida y sin terminar.</li>
+<li><strong>Línea gris fina debajo</strong>: cuándo se trabajó realmente.</li>
+<li><strong>Rombo</strong>: el hito de la etapa; verde si se cumplió.</li>
+<li><strong>Línea roja punteada</strong>: hoy.</li>
+</ul>
+<p>Pasando el mouse por una barra se ven fechas, avance y horas.</p>
+<figure><img alt="Cronograma" src="assets/manual/11_gantt.png"><figcaption>Cronograma</figcaption></figure>
+<h3 id="83-curva-s-y-costo-por-persona">8.3 Curva S y costo por persona</h3>
+<figure><img alt="Curva S y costo por persona" src="assets/manual/12_graficos.png"><figcaption>Curva S y costo por persona</figcaption></figure>
+<p>La <strong>curva S</strong> muestra tres líneas acumuladas en la moneda base:</p>
+<ul>
+<li><strong>Planificado (gris punteado)</strong>: el costo del trabajo que debería estar hecho en cada fecha.</li>
+<li><strong>Ganado (azul)</strong>: el costo previsto del trabajo que realmente se hizo.</li>
+<li><strong>Real (naranja)</strong>: lo que realmente se gastó.</li>
+</ul>
+<p>Cómo leerla: si la línea <strong>naranja va por encima de la azul</strong>, se está gastando más de lo que vale lo hecho (sobrecosto). Si la <strong>azul va por debajo de la gris</strong>, el proyecto está atrasado.</p>
+<p>El gráfico de <strong>costo por persona</strong> compara lo previsto para toda la participación de cada uno con lo gastado hasta hoy. En naranja, quien ya superó lo previsto.</p>
+<p>El selector <strong>Ver al</strong> (arriba a la derecha del proyecto) permite ver todos estos números a una fecha pasada, por ejemplo para preparar un informe de fin de mes.</p>
+<h3 id="84-cartera-de-proyectos">8.4 Cartera de proyectos</h3>
+<p><strong>Proyectos</strong> muestra todos los proyectos activos con su avance, CPI, SPI, precio, margen previsto y proyectado, y próximo hito. Arriba, el resumen: cuántos proyectos hay en riesgo (CPI o SPI menores que 0,90), la facturación total (con su equivalente en dólares), el margen proyectado de toda la cartera y las etapas atrasadas.</p>
+<figure><img alt="Cartera de proyectos" src="assets/manual/06_cartera.png"><figcaption>Cartera de proyectos</figcaption></figure>
+<h3 id="85-carga-del-equipo">8.5 Carga del equipo</h3>
+<p>En <strong>Equipo</strong>, el gráfico <strong>Carga semanal</strong> muestra, por semana, las horas reales cargadas (barras), las horas planificadas según las tareas asignadas (línea naranja) y la capacidad de los empleados (línea punteada). Sirve para ver si alguien está sobrecargado o si hay capacidad para un proyecto nuevo.</p>
+<figure><img alt="Carga del equipo" src="assets/manual/18_carga_equipo.png"><figcaption>Carga del equipo</figcaption></figure>
+<h2 id="9-exportar-documentos-y-dashboards">9. Exportar documentos y dashboards</h2>
+<p>El botón azul <strong>Exportar</strong> está en cada fila de <strong>Proyectos</strong> y de <strong>Inicio</strong>, y dentro de cada proyecto (<strong>Exportar (PDF · Excel · HTML)</strong>). Ofrece cinco opciones. Desde dentro del proyecto usan la fecha elegida en <strong>Ver al</strong>; desde Proyectos e Inicio, la fecha de hoy.</p>
+<figure><img alt="Exportar" src="assets/manual/19_exportar.png"><figcaption>Exportar</figcaption></figure>
+<h3 id="91-para-el-cliente-en-espanol-o-ingles-sin-costos">9.1 Para el cliente (en español o inglés, sin costos)</h3>
+<p>Los documentos para el cliente <strong>nunca muestran costos, márgenes, tarifas ni nombres del equipo</strong>. Llevan los datos de la empresa (sección 4.3); el dashboard HTML lleva además el logo, si cargaste uno.</p>
+<p>En el diálogo elegí el <strong>Idioma</strong>: <strong>Español</strong> (por defecto) o <strong>English</strong>. Se aplica a la propuesta, al informe de avance y al dashboard para el cliente; títulos, fechas, estados y números salen en ese idioma. Los nombres de etapas, tareas y el alcance salen como los escribiste.</p>
+<table>
+<thead>
+<tr>
+<th>Opción</th>
+<th>Qué contiene</th>
+<th>Formatos</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Propuesta</strong></td>
+<td>Alcance, cronograma por etapa, actividades de cada etapa, horas estimadas, precio por etapa, total, condiciones y espacio para la firma de aceptación</td>
+<td>PDF o Excel</td>
+</tr>
+<tr>
+<td><strong>Informe de avance</strong></td>
+<td>Avance general y por etapa contra lo planificado, cronograma con la línea de hoy, hitos entregados, aprobaciones del cliente y avance de cada actividad</td>
+<td>PDF o Excel</td>
+</tr>
+<tr>
+<td><strong>Dashboard interactivo</strong></td>
+<td>Página con gráficos, cronograma y tabla de actividades con filtro y búsqueda</td>
+<td>HTML</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li><strong>Precio por etapa</strong>: el precio acordado se reparte entre las etapas en proporción al costo previsto de sus tareas, es decir, según el esfuerzo de cada una. La suma siempre da el total.</li>
+<li><strong>Mostrar también en</strong> (solo propuesta): elegí <strong>USD</strong> (u otra moneda) para agregar una columna con el equivalente, calculado con la cotización vigente a la fecha del documento. El documento aclara la cotización usada y que los importes que valen son los de la moneda base. Con <strong>Solo ARS</strong> sale únicamente en pesos.</li>
+<li>Si el proyecto tiene un % de impuesto, la propuesta muestra subtotal, impuesto y total.</li>
+</ul>
+<h3 id="92-para-uso-interno">9.2 Para uso interno</h3>
+<table>
+<thead>
+<tr>
+<th>Opción</th>
+<th>Qué contiene</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Excel completo</strong></td>
+<td>Resumen, etapas, tareas, horas, gastos, curva S y costo por persona, con gráficos</td>
+</tr>
+<tr>
+<td><strong>Dashboard interactivo</strong></td>
+<td>CPI, SPI, margen proyectado, curva S en la moneda base, costo por persona y tabla de tareas con costos (siempre en español)</td>
+</tr>
+</tbody>
+</table>
+<p>Además, en <strong>Proyectos</strong> están <strong>Excel cartera</strong> (todos los proyectos con sus indicadores) y <strong>Excel base completa</strong> (todas las tablas, una por hoja).</p>
+<h3 id="93-los-dashboards-en-html">9.3 Los dashboards en HTML</h3>
+<p>El dashboard se descarga como <strong>un solo archivo .html</strong> que se abre con doble clic en cualquier navegador, <strong>sin el programa y sin internet</strong>. Se puede enviar por mail o subir a Drive. Es interactivo: al pasar el mouse por los gráficos y el cronograma se ven los valores, al hacer clic en una etapa la tabla se filtra, y las columnas se ordenan con un clic en el título. Es una foto a la fecha de exportación: para actualizarlo, se exporta de nuevo.</p>
+<p>Los archivos se descargan en la carpeta <strong>Descargas</strong> con el nombre del proyecto y la fecha.</p>
+<h2 id="10-respaldos-y-datos">10. Respaldos y datos</h2>
+<ul>
+<li>Los datos están en la carpeta <strong>PresupuestosApp</strong> dentro de tu carpeta de usuario (<code>%LOCALAPPDATA%\PresupuestosApp</code>). Desde el menú Inicio: <strong>Presupuestos → Carpeta de datos y respaldos</strong>.</li>
+<li><strong>Cada vez que abrís el programa se hace un respaldo automático</strong> en la subcarpeta <code>backups</code>. Se guardan los últimos 30.</li>
+<li><strong>Desinstalar o actualizar el programa no borra tus datos.</strong></li>
+<li>Para restaurar un respaldo: cerrá el programa (ventana negra), copiá el respaldo elegido de <code>backups</code> a la carpeta <code>PresupuestosApp</code> y renombralo como <code>presupuestos.db</code>, reemplazando el existente. Si en la carpeta hay archivos <code>presupuestos.db-wal</code> o <code>presupuestos.db-shm</code>, borralos antes.</li>
+<li>Para pasar los datos a otra computadora: instalá el programa allí, abrilo y cerralo una vez. Después, con el programa cerrado en las dos, copiá <code>presupuestos.db</code> (y los archivos <code>presupuestos.db-wal</code> y <code>presupuestos.db-shm</code>, si existen) a la misma carpeta de la otra computadora, reemplazando los que haya.</li>
+<li>Recomendación: una vez por semana copiá el último respaldo a OneDrive, Google Drive o un pendrive.</li>
+</ul>
+<h2 id="11-actualizaciones">11. Actualizaciones</h2>
+<p>Cuando recibas una versión nueva (por ejemplo <strong>Presupuestos-Setup-0.5.0.exe</strong>), cerrá el programa y ejecutá el instalador nuevo: reemplaza el programa y conserva todos los datos. La base se adapta sola a la versión nueva la primera vez que la abrís.</p>
+<p>Si venías usando una versión anterior en dólares, se conservan todos los importes y la moneda base sigue siendo <strong>USD</strong>. El logo que traía esa versión ya no viene incluido: si querés verlo en la barra, cargalo en <strong>Configuración → Datos de la empresa</strong>.</p>
+<h2 id="12-problemas-frecuentes">12. Problemas frecuentes</h2>
+<table>
+<thead>
+<tr>
+<th>Qué pasa</th>
+<th>Qué hacer</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Windows dice "Windows protegió su PC"</td>
+<td><strong>Más información → Ejecutar de todos modos</strong> (sección 2)</td>
+</tr>
+<tr>
+<td>El navegador dice "No se puede acceder a este sitio"</td>
+<td>El programa está cerrado: abrilo con el acceso directo. Si la ventana negra está abierta, esperá unos segundos y recargá</td>
+</tr>
+<tr>
+<td>"No hay cotización cargada para USD"</td>
+<td>Cargá la cotización en <strong>Cotizaciones</strong></td>
+</tr>
+<tr>
+<td>No me deja cambiar la moneda base</td>
+<td>Ya hay datos cargados. Ver sección 4.2</td>
+</tr>
+<tr>
+<td>La barra no muestra logo</td>
+<td>El logo es opcional: cargalo en <strong>Configuración → Datos de la empresa</strong></td>
+</tr>
+<tr>
+<td>Un costo por hora aparece como "—"</td>
+<td>Falta la cotización de la moneda de esa persona</td>
+</tr>
+<tr>
+<td>Cambié un sueldo y el costo de una tarea no cambió</td>
+<td>Es correcto: el costo por hora queda fijo en la tarea al crearla. Para recalcularlo, editá la tarea y escribí el nuevo costo por hora</td>
+</tr>
+<tr>
+<td>El avance dice "auto"</td>
+<td>No cargaste un % manual: se calcula por horas. Escribí el % real si no coincide</td>
+</tr>
+<tr>
+<td>Una etapa aparece "atrasada"</td>
+<td>La fecha de fin prevista ya pasó. Si en realidad terminó, cargá su <strong>fin real</strong>; si cambió el plan, actualizá el <strong>fin previsto</strong></td>
+</tr>
+<tr>
+<td>La ventana negra muestra un error</td>
+<td>Cerrala y volvé a abrir el programa. Si se repite, enviá el archivo <code>logs\app.log</code> de la carpeta de datos</td>
+</tr>
+</tbody>
+</table>
+<h2 id="13-glosario">13. Glosario</h2>
+<table>
+<thead>
+<tr>
+<th>Término</th>
+<th>Significado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Moneda base</td>
+<td>Moneda en la que se calculan y guardan todos los importes (por defecto ARS)</td>
+</tr>
+<tr>
+<td>Cotización</td>
+<td>Cuántas unidades de la moneda base vale 1 unidad de otra moneda (1 USD = 1.540 ARS)</td>
+</tr>
+<tr>
+<td>Costo directo por hora</td>
+<td>Lo que cuesta una hora de una persona: sueldo con contribuciones patronales ÷ horas facturables, o la tarifa del autónomo</td>
+</tr>
+<tr>
+<td>Tasa de estructura</td>
+<td>Gastos fijos anuales ÷ horas facturables del año. Se suma a cada hora</td>
+</tr>
+<tr>
+<td>Utilización</td>
+<td>Parte de las horas de un empleado que se facturan a clientes</td>
+</tr>
+<tr>
+<td>Margen</td>
+<td>Ganancia como % del precio: (precio − costo) ÷ precio</td>
+</tr>
+<tr>
+<td>Markup</td>
+<td>Ganancia como % del costo. Un margen de 35% equivale a un markup de 53,8%</td>
+</tr>
+<tr>
+<td>Costo previsto (BAC)</td>
+<td>Suma del costo de todas las tareas planificadas</td>
+</tr>
+<tr>
+<td>Valor planificado (PV)</td>
+<td>Costo del trabajo que debería estar hecho a una fecha</td>
+</tr>
+<tr>
+<td>Valor ganado (EV)</td>
+<td>Costo previsto del trabajo que realmente está hecho</td>
+</tr>
+<tr>
+<td>Costo real (AC)</td>
+<td>Lo efectivamente gastado en horas</td>
+</tr>
+<tr>
+<td>CPI</td>
+<td>Valor ganado ÷ costo real. Menor que 1: sobrecosto</td>
+</tr>
+<tr>
+<td>SPI</td>
+<td>Valor ganado ÷ valor planificado. Menor que 1: atraso</td>
+</tr>
+<tr>
+<td>Costo final estimado (EAC)</td>
+<td>Costo previsto ÷ CPI, más los gastos externos: cuánto va a costar el proyecto si sigue igual</td>
+</tr>
+<tr>
+<td>Avance ponderado</td>
+<td>Suma del avance de cada etapa multiplicado por su peso</td>
+</tr>
+<tr>
+<td>Hito</td>
+<td>Entregable que marca el cierre de una etapa</td>
+</tr>
+<tr>
+<td>Versión del presupuesto</td>
+<td>Cada propuesta de precio y alcance enviada al cliente; la aprobada congela costos y genera las tareas</td>
+</tr>
+</tbody>
+</table>
+<p><a id="licencia"></a></p>
+<h2 id="14-licencia-y-autoria">14. Licencia y autoría</h2>
+<p><strong>Presupuestos y seguimiento de proyectos</strong> es software libre. Copyright © 2026 Eduardo José Moreno.</p>
+<p>Se distribuye bajo la <strong>Licencia Pública General GNU versión 3 (GPL-3.0)</strong> o posterior: podés usarlo, estudiarlo, modificarlo y compartirlo, también con fines comerciales, siempre que las versiones que distribuyas sigan siendo libres bajo la misma licencia.</p>
+<p>Términos adicionales (sección 7 de la GPL-3.0):</p>
+<ul>
+<li>Toda copia o versión modificada debe conservar visible la leyenda <strong>"Desarrollo e Implementación: Lic. Eduardo J. Moreno"</strong> en el pie de las pantallas y de los documentos y dashboards que genera.</li>
+<li>Las versiones modificadas deben indicar que lo son y quién las modificó.</li>
+</ul>
+<p>El programa se entrega <strong>sin ninguna garantía</strong>. El texto completo de la licencia y el aviso de autoría están en los archivos <code>LICENSE</code> y <code>NOTICE.md</code> de la carpeta del programa y del repositorio.</p></article>
+  </div>
+</main>
+<script src="assets/app.js"></script>
+</body>
+</html>
+<!-- Generado por scripts/generar_manual.py desde docs/manual.md: no editar a mano. -->

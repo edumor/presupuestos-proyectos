@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Configuración · Presupuestos</title>
+  <link rel="stylesheet" href="assets/app.css">
+</head>
+<body>
+<main>
+  <h1>Configuración</h1>
+  <p class="sub">Datos de tu empresa y parámetros que usan todos los cálculos. Los cambios no alteran costos ya registrados.</p>
+  <div class="grid g2">
+    <form class="card" id="f-empresa" style="grid-column:1/-1">
+      <h2>Datos de la empresa</h2>
+      <p class="small muted" style="margin-top:-6px">Aparecen en la barra del programa y en el encabezado de las propuestas, informes de avance y dashboards para el cliente. Todos son opcionales.</p>
+      <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px">
+        <label>Nombre o razón social<input name="empresa_nombre" maxlength="160"></label>
+        <label>Domicilio (calle y número)<input name="empresa_direccion" maxlength="255"></label>
+        <label>Localidad<input name="empresa_localidad" maxlength="120"></label>
+        <label>Provincia<input name="empresa_provincia" maxlength="120"></label>
+        <label>Código postal<input name="empresa_cp" maxlength="20"></label>
+        <label>País<input name="empresa_pais" maxlength="80" placeholder="Argentina"></label>
+        <label>Teléfonos<input name="empresa_telefonos" maxlength="160" placeholder="+54 11 5555-0000 / WhatsApp"></label>
+        <label>Email<input name="empresa_email" type="email" maxlength="160"></label>
+        <label>Página web<input name="empresa_web" maxlength="160" placeholder="www.tuempresa.com.ar"></label>
+        <label>CUIT / identificación fiscal<input name="empresa_id_fiscal" maxlength="60" placeholder="30-12345678-9"></label>
+        <label>Validez de la propuesta (días)<input name="validez_dias" type="number" min="1" max="365" step="1"></label>
+        <label style="grid-column:1/-1">Condiciones (se imprimen al final de la propuesta, en el idioma en que las escribas)
+          <textarea name="condiciones" rows="4" placeholder="Forma de pago: 40% al aceptar, 30% al terminar la Ejecución y 30% en la entrega final."></textarea></label>
+      </div>
+      <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap;margin-top:12px">
+        <div><div class="small muted" style="margin-bottom:4px">Logo de la empresa (opcional): barra del programa y de los dashboards HTML. PNG o JPG, hasta 2 MB</div>
+          <img id="logo-prev" class="logo-prev" alt="Logo" hidden><div id="sin-logo" class="small muted" style="margin-top:4px"></div></div>
+        <label class="small" style="flex-direction:row;align-items:center;gap:8px"><input type="file" id="logo-file" accept="image/png,image/jpeg"></label>
+        <button type="button" class="danger" id="btn-quitar-logo" hidden onclick="quitarLogo()">Quitar logo</button>
+      </div>
+      <div class="actions"><button class="primary">Guardar datos de la empresa</button></div>
+    </form>
+    <form class="card" id="f-cfg" style="grid-column:1/-1">
+      <h2>Parámetros de costeo</h2>
+      <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px">
+        <label>Horas anuales por empleado<input name="horas_anuales" type="number" step="1" min="1" required></label>
+        <label>Utilización (%)<input name="utilizacion" type="number" step="0.1" min="1" max="100" data-pct="1" required></label>
+        <label>Contribuciones patronales (%)<input name="ss_empresa_defecto" type="number" step="0.01" min="0" max="100" data-pct="1" required></label>
+        <label>Horas anuales de autónomos<input name="horas_autonomos_anuales" type="number" step="1" min="0" required></label>
+        <label>Margen objetivo (%)<input name="margen_defecto" type="number" step="0.1" min="0" max="99" data-pct="1" required></label>
+        <label>Alerta si el margen baja de (%)<input name="margen_alerta" type="number" step="0.1" min="0" max="99" data-pct="1" required></label>
+        <label>Impuesto por defecto (%)<input name="impuesto_defecto" type="number" step="0.01" min="0" max="100" data-pct="1" required></label>
+        <label>Zona horaria<input name="zona_horaria" required></label>
+      </div>
+      <p class="small muted">Utilización: % de las horas de un empleado que se facturan a clientes (referencia del sector: 65–80%).
+        Contribuciones patronales: cargas sociales que paga la empresa sobre el sueldo bruto (en Argentina, alrededor de 26–28% más ART).
+        El impuesto es solo un % que se suma al precio; la definición fiscal la hace el contador.</p>
+      <div class="actions"><button class="primary">Guardar</button></div>
+    </form>
+    <form class="card" id="f-moneda">
+      <h2>Moneda base</h2>
+      <label>Moneda en la que se calculan costos y precios<select name="moneda_base" data-monedas></select></label>
+      <p class="small muted" id="moneda-nota"></p>
+      <div class="actions"><button class="primary" id="btn-moneda">Cambiar moneda base</button></div>
+    </form>
+    <div class="card">
+      <h2>Datos de ejemplo</h2>
+      <p id="ej-estado" class="muted"></p>
+      <p class="small muted">Cargan un equipo, costos fijos, cotizaciones y dos proyectos ficticios (marcados EJEMPLO) de una agencia argentina, con valores de referencia en pesos. Borrarlos no toca los datos propios, los roles ni las cotizaciones.</p>
+      <div class="actions" style="justify-content:flex-start"><button id="btn-ej"></button></div>
+    </div>
+  </div>
+</main>
+<script src="assets/app.js"></script>
+<script>
+const f = document.getElementById('f-cfg'), fe = document.getElementById('f-empresa'), fm = document.getElementById('f-moneda');
+let C = null;
+function pintarLogo(hay) {
+  const img = document.getElementById('logo-prev');
+  img.hidden = !hay; if (hay) img.src = '/api/config/logo?t=' + Date.now();
+  document.getElementById('sin-logo').textContent = hay ? 'Logo cargado' : 'Sin logo (es opcional)';
+  document.getElementById('btn-quitar-logo').hidden = !hay;
+  document.querySelectorAll('header.top .logo-top').forEach(a => {
+    a.style.display = hay ? '' : 'none'; const i = a.querySelector('img'); if (hay) i.src = '/api/config/logo?t=' + Date.now();
+  });
+}
+function pintarMoneda() {
+  fm.moneda_base.value = C.moneda_base;
+  fm.moneda_base.disabled = !C.puede_cambiar_base;
+  document.getElementById('btn-moneda').hidden = !C.puede_cambiar_base;
+  document.getElementById('moneda-nota').textContent = C.puede_cambiar_base
+    ? 'Elegila antes de cargar datos. Las demás monedas (por ejemplo, USD) se convierten con las cotizaciones y se pueden mostrar en las propuestas.'
+    : `La moneda base es ${C.moneda_base}. Solo se puede cambiar sin datos cargados (equipo, estructura, proyectos ni cotizaciones), porque todos los importes guardados están en esa moneda.`;
+}
+async function cargar() {
+  C = await api('/config');
+  llenarForm(f, C); llenarForm(fe, C); pintarLogo(C.tiene_logo); pintarMoneda();
+  const ej = await api('/ejemplo'), b = document.getElementById('btn-ej');
+  document.getElementById('ej-estado').textContent = ej.cargado ? 'Los datos de ejemplo están cargados.' : 'No hay datos de ejemplo cargados.';
+  b.textContent = ej.cargado ? 'Borrar datos de ejemplo' : 'Cargar datos de ejemplo';
+  b.className = ej.cargado ? 'danger' : 'primary';
+  b.onclick = async () => {
+    if (ej.cargado && !confirm('¿Borrar los datos de ejemplo?')) return;
+    try { await api('/ejemplo', { method: ej.cargado ? 'DELETE' : 'POST' }); }
+    catch (e) { return toast(e.message, true); }
+    toast(ej.cargado ? 'Datos de ejemplo borrados' : 'Datos de ejemplo cargados'); cargar();
+  };
+}
+async function guardar(d, msg) {
+  try { C = await api('/config', { method: 'PUT', body: { ...C, ...d } }); toast(msg); return true; }
+  catch (e) { toast(e.message, true); return false; }
+}
+f.addEventListener('submit', ev => { ev.preventDefault(); guardar(datosForm(f), 'Configuración guardada'); });
+fe.addEventListener('submit', async ev => {
+  ev.preventDefault();
+  const d = datosForm(fe); d.validez_dias = Number(d.validez_dias || 30);
+  if (await guardar(d, 'Datos de la empresa guardados'))
+    document.querySelectorAll('header.top .brand').forEach(b => b.textContent = C.empresa_nombre || 'Presupuestos');
+});
+fm.addEventListener('submit', async ev => {
+  ev.preventDefault();
+  const nueva = fm.moneda_base.value;
+  if (nueva === C.moneda_base) return toast('Esa ya es la moneda base');
+  if (!confirm(`¿Usar ${nueva} como moneda base?`)) return;
+  if (await guardar({ moneda_base: nueva }, 'Moneda base: ' + nueva)) setTimeout(() => location.reload(), 600);
+});
+document.getElementById('logo-file').addEventListener('change', ev => {
+  const archivo = ev.target.files[0]; if (!archivo) return;
+  if (archivo.size > 2 * 1024 * 1024) { toast('El logo supera 2 MB', true); ev.target.value = ''; return; }
+  const lector = new FileReader();
+  lector.onload = async () => {
+    try { await api('/config/logo', { method: 'PUT', body: { data_url: lector.result } }); pintarLogo(true); toast('Logo guardado'); }
+    catch (e) { toast(e.message, true); }
+    ev.target.value = '';
+  };
+  lector.readAsDataURL(archivo);
+});
+async function quitarLogo() { await api('/config/logo', { method: 'DELETE' }); pintarLogo(false); toast('Logo quitado'); }
+cargar();
+</script>
+</body>
+</html>

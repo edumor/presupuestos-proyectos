@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+# Datos locales (nunca al repositorio)
+data/
+*.db
+*.sqlite3
+# Build
+build/
+dist/
+packaging/Output/
+*.spec.bak
+# Editor
+.vscode/
+.idea/
+.venv-build/
+Para Laura/
+Para distribuir/
+_snapshot.tgz

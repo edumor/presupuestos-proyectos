@@ -1,0 +1,434 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Proyecto · Presupuestos</title>
+  <link rel="stylesheet" href="assets/app.css">
+</head>
+<body>
+<main>
+  <p class="small"><a href="proyectos.html">← Proyectos</a></p>
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap">
+    <div><h1 id="titulo">Proyecto</h1><p class="sub" id="subtitulo"></p></div>
+    <div class="bar-tools">
+      <label style="flex-direction:row;align-items:center;gap:6px">Ver al <input type="date" id="fecha-corte" onchange="cargar()"></label>
+      <button class="primary" onclick="abrirExportar(PID, P.nombre, P.precio_base, () => document.getElementById('fecha-corte').value)">Exportar (PDF · Excel · HTML)</button>
+      <button onclick="abrirProyecto()">Editar</button>
+    </div>
+  </div>
+  <div class="grid g4" id="kpis"></div>
+  <div id="hito"></div>
+
+  <div class="tabs">
+    <button data-tab="resumen" class="on">Resumen</button>
+    <button data-tab="presupuesto">Presupuesto</button>
+    <button data-tab="tareas">Etapas y tareas</button>
+    <button data-tab="horas">Horas y gastos</button>
+  </div>
+
+  <section data-panel="resumen">
+    <div class="card"><h2>Etapas</h2><div class="etapas" id="etapas"></div></div>
+    <div class="card" style="margin-top:16px">
+      <h2>Cronograma: previsto vs real</h2>
+      <div class="gantt" id="gantt"></div>
+      <div class="leyenda">
+        <span><i style="background:#dbe5f8;border:1px solid #9db5ea"></i>Plazo previsto</span>
+        <span><i style="background:#2456c8"></i>Avance</span>
+        <span><i style="background:#b26a00"></i>Avance de tarea vencida</span>
+        <span><i style="background:#5d6677;height:3px"></i>Ejecución real</span>
+        <span><i style="background:#1a7f37;transform:rotate(45deg);width:9px;height:9px"></i>Hito cumplido</span>
+        <span><i style="border-left:2px dashed #c62828;width:2px;height:12px;border-radius:0"></i>Hoy</span>
+      </div>
+    </div>
+    <div class="grid g2" style="margin-top:16px">
+      <div class="card"><h2>Curva S (<span class="mb"></span> acumulados) <span id="ayuda-curva"></span></h2><div class="chart-box"><canvas id="g-curva"></canvas></div></div>
+      <div class="card"><h2>Costo por persona: previsto vs real</h2><p class="small muted" style="margin-top:-6px">Naranja: ya superó lo previsto para toda su participación.</p><div class="chart-box"><canvas id="g-personas"></canvas></div></div>
+    </div>
+  </section>
+
+  <section data-panel="presupuesto" hidden>
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+        <h2 style="margin:0">Versiones del presupuesto</h2><button class="primary" onclick="nuevaVersion()">+ Nueva versión</button></div>
+      <p class="small muted">Armá el presupuesto desde el catálogo de servicios. Al aprobar una versión se congelan sus costos, el precio pasa al proyecto y se crean las tareas en cada etapa.</p>
+      <table><thead><tr><th>Versión</th><th>Estado</th><th class="num">Ítems</th><th class="num">Horas</th><th class="num">Costo</th>
+        <th class="num">Precio</th><th class="num">Margen</th><th>Enviado</th><th>Aprobado</th></tr></thead><tbody id="pres-versiones"></tbody></table>
+    </div>
+    <div id="pres-editor"></div>
+  </section>
+
+  <section data-panel="tareas" hidden>
+    <div class="bar-tools" style="margin-bottom:12px"><button onclick="abrirEtapa()">+ Etapa</button><button class="primary" onclick="abrirTarea()">+ Tarea</button></div>
+    <div class="card"><table>
+      <thead><tr><th>Tarea</th><th>Responsable</th><th>Plazo previsto</th><th class="num">Horas prev / real</th>
+        <th class="num">Costo prev / real</th><th style="width:150px">Avance %</th><th></th></tr></thead>
+      <tbody id="tabla-tareas"></tbody></table></div>
+  </section>
+
+  <section data-panel="horas" hidden>
+    <div class="grid g2">
+      <div class="card">
+        <h2>Cargar horas</h2>
+        <form class="row" id="f-hora">
+          <label>Fecha<input name="fecha" type="date" required></label>
+          <label>Persona<select name="persona_id" required id="sel-hora-persona"></select></label>
+          <label style="flex:1;min-width:180px">Tarea<select name="tarea_id" required id="sel-hora-tarea"></select></label>
+          <label style="width:80px">Horas<input name="horas" type="number" step="0.25" min="0.25" max="24" required></label>
+          <label style="flex:1;min-width:140px">Nota<input name="nota"></label>
+          <button class="primary">Cargar</button>
+        </form>
+        <p class="small muted">Para cargar la semana completa de una persona usá la pantalla <a href="horas.html">Horas</a>.</p>
+        <table style="margin-top:8px"><thead><tr><th>Fecha</th><th>Persona</th><th>Tarea</th><th class="num">Horas</th><th class="num">Costo</th><th></th></tr></thead>
+          <tbody id="tabla-horas"></tbody></table>
+      </div>
+      <div class="card">
+        <h2>Gastos externos</h2>
+        <form class="row" id="f-gasto">
+          <label style="flex:1;min-width:160px">Concepto<input name="concepto" required></label>
+          <label>Tipo<select name="es_real"><option value="false">Previsto</option><option value="true">Real</option></select></label>
+          <label>Moneda<select name="moneda" data-monedas></select></label>
+          <label style="width:100px">Importe<input name="importe" type="number" step="0.01" min="0" required></label>
+          <label>Fecha<input name="fecha" type="date"></label>
+          <button class="primary">Agregar</button>
+        </form>
+        <table style="margin-top:8px"><thead><tr><th>Concepto</th><th>Tipo</th><th>Fecha</th><th class="num">Importe</th><th class="num mb"></th><th></th></tr></thead>
+          <tbody id="tabla-gastos"></tbody></table>
+      </div>
+    </div>
+  </section>
+</main>
+
+
+
+<dialog id="dlg-proyecto">
+  <h2>Editar proyecto</h2>
+  <form id="f-proyecto">
+    <div class="fields">
+      <label class="full">Nombre<input name="nombre" required></label>
+      <label class="full">Cliente<select name="cliente_id" id="sel-cliente"></select></label>
+      <label>Inicio<input name="fecha_inicio" type="date" required></label>
+      <label>Fin<input name="fecha_fin" type="date" required></label>
+      <label>Precio acordado (<span class="mb"></span>)<input name="precio_base" type="number" step="0.01" min="0"></label>
+      <label>Estado<select name="estado"></select></label>
+      <label class="full">Alcance<textarea name="alcance" rows="2"></textarea></label>
+    </div>
+    <div class="actions" style="justify-content:space-between"><button type="button" class="danger" onclick="borrarProyecto()">Borrar proyecto</button>
+      <div style="display:flex;gap:8px"><button type="button" onclick="this.closest('dialog').close()">Cancelar</button><button class="primary">Guardar</button></div></div>
+  </form>
+</dialog>
+
+<dialog id="dlg-etapa">
+  <h2 id="tit-etapa">Etapa</h2>
+  <form id="f-etapa">
+    <div class="fields">
+      <label>Nombre<input name="nombre" required></label>
+      <label>Peso en el avance (%)<input name="peso" type="number" step="1" min="0" max="100" data-pct="1"></label>
+      <label>Inicio previsto<input name="inicio_previsto" type="date"></label>
+      <label>Fin previsto<input name="fin_previsto" type="date"></label>
+      <label>Inicio real<input name="inicio_real" type="date"></label>
+      <label>Fin real<input name="fin_real" type="date"></label>
+      <label class="full">Hito de cierre<input name="hito"></label>
+      <label>Hito cumplido el<input name="hito_cumplido" type="date"></label>
+      <label style="flex-direction:row;align-items:center;gap:8px;margin-top:18px"><input type="checkbox" name="aprobada_cliente"> Aprobada por el cliente</label>
+      <label>Fecha de aprobación<input name="fecha_aprobacion" type="date"></label>
+      <label>Orden<input name="orden" type="number" step="1"></label>
+      <label class="full">Notas<textarea name="notas" rows="2"></textarea></label>
+    </div>
+    <div class="actions" style="justify-content:space-between"><button type="button" class="danger" id="btn-borrar-etapa" onclick="borrarEtapa()">Borrar etapa</button>
+      <div style="display:flex;gap:8px"><button type="button" onclick="this.closest('dialog').close()">Cancelar</button><button class="primary">Guardar</button></div></div>
+  </form>
+</dialog>
+
+<dialog id="dlg-tarea">
+  <h2 id="tit-tarea">Tarea</h2>
+  <form id="f-tarea">
+    <div class="fields">
+      <label class="full">Nombre<input name="nombre" required></label>
+      <label>Etapa<select name="etapa_id" id="sel-etapa"></select></label>
+      <label>Responsable<select name="persona_id" id="sel-persona"></select></label>
+      <label>Inicio previsto<input name="fecha_inicio" type="date" required></label>
+      <label>Fin previsto<input name="fecha_fin" type="date" required></label>
+      <label>Horas previstas<input name="horas_previstas" type="number" step="0.25" min="0.25" required></label>
+      <label>Costo por hora <span class="mb"></span> <input name="costo_hora_base" type="number" step="0.01" min="0" placeholder="del responsable"></label>
+      <label>Inicio real<input name="inicio_real" type="date"></label>
+      <label>Fin real<input name="fin_real" type="date"></label>
+      <label>Avance (%)<input name="avance" type="number" step="1" min="0" max="100" data-pct="1" placeholder="automático"></label>
+    </div>
+    <p class="small muted">Si dejás el avance vacío se calcula con horas reales ÷ horas previstas. El costo por hora se congela al crear la tarea.</p>
+    <div class="actions"><button type="button" onclick="this.closest('dialog').close()">Cancelar</button><button class="primary">Guardar</button></div>
+  </form>
+</dialog>
+
+<script src="assets/vendor/chart.umd.min.js"></script>
+<script src="assets/app.js"></script>
+<script src="assets/presupuesto.js"></script>
+<script>
+const PID = Number(new URLSearchParams(location.search).get('id'));
+let P, S, tareas = [], personas = [], graficos = [], etapaEdit = null, tareaEdit = null;
+
+document.querySelectorAll('.tabs button').forEach(b => b.onclick = () => {
+  document.querySelectorAll('.tabs button').forEach(x => x.classList.toggle('on', x === b));
+  document.querySelectorAll('[data-panel]').forEach(s => s.hidden = s.dataset.panel !== b.dataset.tab);
+});
+document.querySelector('[data-panel=resumen] h2').innerHTML = 'Etapas ' + ayuda('Hacé clic en una etapa para editar fechas reales, hito y aprobación del cliente. La línea negra en la barra marca lo planificado a la fecha.');
+document.getElementById('ayuda-curva').innerHTML = ayuda('Planificado (PV): costo del trabajo que debería estar hecho. Ganado (EV): costo previsto del trabajo hecho. Real (AC): lo gastado. Si Real está por encima de Ganado hay sobrecosto; si Ganado está por debajo de Planificado hay atraso.');
+document.querySelector('#f-proyecto [name=estado]').innerHTML = Object.entries(ESTADOS_PROY).map(([k, v]) => `<option value="${k}">${v}</option>`).join('');
+document.getElementById('fecha-corte').value = hoyISO();
+
+async function cargar() {
+  const corte = document.getElementById('fecha-corte').value || hoyISO();
+  [P, S, tareas, personas] = await Promise.all([api('/proyectos/' + PID), api(`/proyectos/${PID}/seguimiento?fecha=${corte}`),
+    api(`/proyectos/${PID}/tareas`), api('/personas?solo_activas=true')]);
+  document.title = P.nombre + ' · Presupuestos';
+  document.getElementById('titulo').textContent = P.nombre;
+  document.getElementById('subtitulo').innerHTML = `${esc(P.cliente_nombre || '')} · ${fmtFecha(P.fecha_inicio)} → ${fmtFecha(P.fecha_fin)} · <span class="tag">${ESTADOS_PROY[P.estado]}</span>`;
+  if (P.precio_base) equivalente(P.precio_base).then(eq => {
+    document.getElementById('subtitulo').insertAdjacentHTML('beforeend', `<br>Precio ${fmtBase(P.precio_base)}${eq ? ' <span class="muted">(' + eq + ')</span>' : ''}`);
+  });
+  pintarKpis(); pintarEtapas(); pintarGantt(); pintarGraficos(); pintarTareas(); cargarHorasGastos();
+}
+
+function pintarKpis() {
+  const al = S.margen_alerta;
+  const kpi = (l, v, n, cls, h) => `<div class="card kpi"><div class="label">${l}${h ? ayuda(h) : ''}</div><div class="value ${cls || ''}">${v}</div><div class="note">${n}</div></div>`;
+  const ph = S.proximo_hito;
+  document.getElementById('kpis').innerHTML = [
+    kpi('Avance ponderado', fmtPct(S.avance_ponderado), barraAvance(S.avance_ponderado, S.avance_planificado) + `<div style="margin-top:6px">planificado a la fecha: ${fmtPct(S.avance_planificado)}</div>`,
+        S.avance_ponderado + 0.02 < S.avance_planificado ? 'warn' : '', 'Suma del avance de cada etapa por su peso.'),
+    kpi('Eficiencia en costo (CPI)', fmtNum(S.cpi), `ganado ${fmtBase(S.ev)} / real ${fmtBase(S.ac)}`, claseIndice(S.cpi),
+        'CPI = valor ganado ÷ costo real. Menor que 1: se está gastando más de lo previsto por el trabajo hecho.'),
+    kpi('Eficiencia en plazo (SPI)', fmtNum(S.spi), `ganado ${fmtBase(S.ev)} / planificado ${fmtBase(S.pv)}`, claseIndice(S.spi),
+        'SPI = valor ganado ÷ valor planificado. Menor que 1: el proyecto va atrasado.'),
+    kpi('Margen proyectado', fmtPct(S.margen_proyectado, 1), `previsto ${fmtPct(S.margen_previsto, 1)} · costo final est. ${fmtBase(S.eac)}`,
+        claseMargen(S.margen_proyectado, al), 'Si el proyecto sigue gastando como hasta ahora: (precio − costo final estimado) ÷ precio.'),
+  ].join('');
+  document.getElementById('hito').innerHTML = ph ? `<div class="card" style="margin-top:16px;padding:14px 20px"><span class="muted small">Próximo hito</span> <strong style="margin-left:8px">◇ ${esc(ph.hito)}</strong> <span class="muted small">· ${esc(ph.etapa)} · previsto ${fmtFecha(ph.fecha)}</span></div>` : '';
+}
+
+function pintarEtapas() {
+  document.getElementById('etapas').innerHTML = S.etapas.map(e => `<div class="etapa" ${e.id ? `onclick="abrirEtapa(${e.id})"` : ''}>
+    <div class="cab"><span class="nom">${esc(e.nombre)}</span><span class="tag ${ESTADO_ETAPA[e.estado]}">${e.estado}</span></div>
+    ${barraAvance(e.avance, e.avance_planificado)}
+    <div class="linea"><strong style="color:var(--ink)">${fmtPct(e.avance)}</strong> · peso ${fmtPct(e.peso_efectivo)} · ${e.tareas} tareas</div>
+    <div class="linea">${fmtFecha(e.inicio_previsto)} → ${fmtFecha(e.fin_previsto)}${e.fin_real ? ' · terminó ' + fmtFecha(e.fin_real) : ''}</div>
+    ${e.hito ? `<div class="linea">${e.hito_cumplido ? '<span class="v-ok">◆</span>' : '◇'} ${esc(e.hito)}</div>` : ''}
+    <div class="linea">${e.aprobada_cliente ? `<span class="v-ok">✓ Aprobada por el cliente ${fmtFecha(e.fecha_aprobacion)}</span>` : 'Sin aprobación del cliente'}</div>
+  </div>`).join('') || '<p class="muted">Sin etapas. Agregalas desde "Etapas y tareas".</p>';
+}
+
+function pintarGantt() {
+  const cont = document.getElementById('gantt'), hoy = document.getElementById('fecha-corte').value || hoyISO();
+  const fechas = [P.fecha_inicio, P.fecha_fin, hoy];
+  tareas.forEach(t => fechas.push(t.fecha_inicio, t.fecha_fin, t.inicio_real, t.fin_real));
+  S.etapas.forEach(e => fechas.push(e.inicio_previsto, e.fin_previsto, e.inicio_real, e.fin_real));
+  const fs = fechas.filter(Boolean).sort();
+  const ini = sumarDias(fs[0], -2), fin = sumarDias(fs[fs.length - 1], 3), total = diasEntre(ini, fin);
+  const W = Math.max(cont.clientWidth, 760), L = 230, R = 16, AX = 34, FILA = 30;
+  const X = d => L + (diasEntre(ini, d) / total) * (W - L - R);
+  const filas = [];
+  const etapasIds = S.etapas.map(e => e.id);
+  S.etapas.forEach(e => {
+    filas.push({ tipo: 'etapa', e });
+    tareas.filter(t => t.etapa_id === e.id).forEach(t => filas.push({ tipo: 'tarea', t }));
+  });
+  tareas.filter(t => !etapasIds.includes(t.etapa_id)).forEach(t => filas.push({ tipo: 'tarea', t }));
+  const H = AX + filas.length * FILA + 12;
+  let svg = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" font-family="Segoe UI, system-ui, sans-serif" font-size="12">`;
+  // grilla semanal
+  for (let d = lunesDe(ini); d <= fin; d = sumarDias(d, 7)) {
+    if (d < ini) continue;
+    svg += `<line x1="${X(d)}" x2="${X(d)}" y1="${AX - 6}" y2="${H}" stroke="#eef0f3"/>`;
+    svg += `<text x="${X(d) + 3}" y="${AX - 12}" fill="#5d6677" font-size="11">${d.slice(8, 10)}/${d.slice(5, 7)}</text>`;
+  }
+  filas.forEach((f, i) => {
+    const y = AX + i * FILA, cy = y + FILA / 2;
+    if (f.tipo === 'etapa') {
+      const e = f.e;
+      svg += `<rect x="0" y="${y}" width="${W}" height="${FILA}" fill="#f7f8fa"/>`;
+      svg += `<text x="8" y="${cy + 4}" font-weight="600" fill="#1c2230">${esc(e.nombre)}</text>`;
+      svg += `<text x="${L - 8}" y="${cy + 4}" text-anchor="end" fill="#5d6677" font-size="11">${fmtPct(e.avance)}</text>`;
+      if (e.inicio_previsto && e.fin_previsto) {
+        const x1 = X(e.inicio_previsto), x2 = X(sumarDias(e.fin_previsto, 1));
+        svg += `<rect x="${x1}" y="${cy - 6}" width="${Math.max(x2 - x1, 2)}" height="12" rx="3" fill="#dbe5f8" stroke="#9db5ea"/>`;
+        svg += `<rect x="${x1}" y="${cy - 6}" width="${Math.max((x2 - x1) * Math.min(e.avance, 1), 0)}" height="12" rx="3" fill="${e.estado === 'atrasada' ? '#b26a00' : '#2456c8'}"/>`;
+        if (e.hito) {
+          const hx = X(sumarDias(e.fin_previsto, 1)), c = e.hito_cumplido ? '#1a7f37' : '#fff';
+          svg += `<path d="M${hx} ${cy - 7} l7 7 l-7 7 l-7 -7z" fill="${c}" stroke="${e.hito_cumplido ? '#1a7f37' : '#5d6677'}"><title>${esc(e.hito)}${e.hito_cumplido ? ' · cumplido ' + fmtFecha(e.hito_cumplido) : ''}</title></path>`;
+        }
+      }
+      if (e.inicio_real) {
+        const x1 = X(e.inicio_real), x2 = X(sumarDias(e.fin_real || hoy, e.fin_real ? 1 : 0));
+        svg += `<rect x="${x1}" y="${cy + 8}" width="${Math.max(x2 - x1, 2)}" height="3" fill="#5d6677"/>`;
+      }
+    } else {
+      const t = f.t, vencida = t.fecha_fin < hoy && t.avance_efectivo < 0.999;
+      const nombre = t.nombre.length > 30 ? t.nombre.slice(0, 29) + '…' : t.nombre;
+      svg += `<text x="20" y="${cy + 1}" fill="#1c2230">${esc(nombre)}<title>${esc(t.nombre)}</title></text>`;
+      svg += `<text x="20" y="${cy + 12}" fill="#8a93a3" font-size="10.5">${esc(t.persona_nombre || '')}</text>`;
+      svg += `<text x="${L - 8}" y="${cy + 4}" text-anchor="end" fill="#5d6677" font-size="11">${fmtPct(t.avance_efectivo)}</text>`;
+      const x1 = X(t.fecha_inicio), x2 = X(sumarDias(t.fecha_fin, 1));
+      svg += `<g><title>${esc(t.nombre)}: ${fmtFecha(t.fecha_inicio)} → ${fmtFecha(t.fecha_fin)} · avance ${fmtPct(t.avance_efectivo)} · ${fmtNum(t.horas_reales, 1)} de ${fmtNum(t.horas_previstas, 1)} h</title>`;
+      svg += `<rect x="${x1}" y="${cy - 5}" width="${Math.max(x2 - x1, 2)}" height="10" rx="3" fill="#eef3fc" stroke="#b9cbef"/>`;
+      svg += `<rect x="${x1}" y="${cy - 5}" width="${Math.max((x2 - x1) * Math.min(t.avance_efectivo, 1), 0)}" height="10" rx="3" fill="${vencida ? '#b26a00' : '#2456c8'}"/></g>`;
+      if (t.inicio_real) {
+        const r1 = X(t.inicio_real), r2 = X(sumarDias(t.fin_real || hoy, t.fin_real ? 1 : 0));
+        svg += `<rect x="${r1}" y="${cy + 7}" width="${Math.max(r2 - r1, 2)}" height="2.5" fill="#5d6677"/>`;
+      }
+    }
+  });
+  if (hoy >= ini && hoy <= fin) {
+    svg += `<line x1="${X(hoy)}" x2="${X(hoy)}" y1="${AX - 4}" y2="${H}" stroke="#c62828" stroke-dasharray="4 3"/>`;
+    svg += `<text x="${X(hoy)}" y="${H - 2}" text-anchor="middle" fill="#c62828" font-size="10.5" font-weight="600" paint-order="stroke" stroke="#fff" stroke-width="3">Hoy</text>`;
+  }
+  svg += `<line x1="${L}" x2="${L}" y1="${AX - 6}" y2="${H}" stroke="#e3e6eb"/></svg>`;
+  cont.innerHTML = filas.length ? svg : '<p class="muted">Agregá tareas para ver el cronograma.</p>';
+}
+
+function pintarGraficos() {
+  graficos.forEach(g => g.destroy());
+  const c = S.curva_s, pp = S.por_persona;
+  const usd = { maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
+    plugins: { tooltip: { callbacks: { label: x => x.dataset.label + ': ' + fmtBase(x.raw) } } },
+    scales: { y: { title: { display: true, text: BASE }, ticks: { callback: v => v.toLocaleString('es-AR') } }, x: { ticks: { maxRotation: 0, autoSkipPadding: 12 } } } };
+  graficos = [
+    new Chart(document.getElementById('g-curva'), { type: 'line', options: usd, data: { labels: c.map(x => fmtFecha(x.fecha).slice(0, 5)), datasets: [
+      { label: 'Planificado (PV)', data: c.map(x => x.pv), borderColor: COLORES.gris, backgroundColor: COLORES.gris, borderDash: [5, 4], pointRadius: 0, tension: .2 },
+      { label: 'Ganado (EV)', data: c.map(x => x.ev), borderColor: COLORES.acento, backgroundColor: COLORES.acento, pointRadius: 2, tension: .2 },
+      { label: 'Real (AC)', data: c.map(x => x.ac), borderColor: COLORES.warn, backgroundColor: COLORES.warn, pointRadius: 2, tension: .2 } ] } }),
+    new Chart(document.getElementById('g-personas'), { type: 'bar', options: { ...usd, indexAxis: 'y', interaction: { mode: 'index', axis: 'y', intersect: false },
+      scales: { x: { title: { display: true, text: BASE }, ticks: { callback: v => v.toLocaleString('es-AR') } } } },
+      data: { labels: pp.map(x => x.nombre), datasets: [
+        { label: 'Previsto (total)', data: pp.map(x => x.costo_previsto), backgroundColor: COLORES.gris },
+        { label: 'Real a la fecha', data: pp.map(x => x.costo_real), backgroundColor: pp.map(x => x.costo_real > x.costo_previsto * 1.05 ? COLORES.warn : COLORES.acento) } ] } }),
+  ];
+}
+
+// ---------- tareas ----------
+function pintarTareas() {
+  const filas = [];
+  const grupo = (titulo, ts, eid) => {
+    filas.push(`<tr><td colspan="7" style="background:#f7f8fa"><strong>${esc(titulo)}</strong> ${eid ? `<button class="link" onclick="abrirEtapa(${eid})">editar etapa</button>` : ''}</td></tr>`);
+    ts.forEach(t => {
+      const sobre = t.costo_real_base > t.costo_previsto_base * 1.05;
+      filas.push(`<tr><td>${esc(t.nombre)}</td><td>${esc(t.persona_nombre || '—')}</td>
+        <td class="small">${fmtFecha(t.fecha_inicio)} → ${fmtFecha(t.fecha_fin)}</td>
+        <td class="num">${fmtNum(t.horas_previstas, 1)} / ${fmtNum(t.horas_reales, 1)}</td>
+        <td class="num">${fmtNum(t.costo_previsto_base, 0)} / <span class="${sobre ? 'v-warn' : ''}">${fmtNum(t.costo_real_base, 0)}</span></td>
+        <td><div style="display:flex;gap:6px;align-items:center"><input class="celda" type="number" min="0" max="100" step="5"
+             value="${t.avance != null ? Math.round(t.avance * 100) : ''}" placeholder="${Math.round(t.avance_efectivo * 100)}" onchange="guardarAvance(${t.id}, this.value)">
+             <span class="small muted">${t.avance == null ? 'auto' : ''}</span></div></td>
+        <td class="num"><button class="link" onclick="abrirTarea(${t.id})">Editar</button><button class="link danger" onclick="borrarTarea(${t.id})">Borrar</button></td></tr>`);
+    });
+    if (!ts.length) filas.push('<tr><td colspan="7" class="muted small">Sin tareas</td></tr>');
+  };
+  S.etapas.filter(e => e.id).forEach(e => grupo(e.nombre, tareas.filter(t => t.etapa_id === e.id), e.id));
+  const sueltas = tareas.filter(t => !S.etapas.some(e => e.id && e.id === t.etapa_id));
+  if (sueltas.length) grupo('Sin etapa', sueltas);
+  document.getElementById('tabla-tareas').innerHTML = filas.join('');
+}
+async function guardarAvance(id, v) {
+  try { await api(`/tareas/${id}/avance?` + (v === '' ? '' : 'avance=' + (Number(v) / 100)), { method: 'PATCH' }); toast('Avance guardado'); cargar(); }
+  catch (e) { toast(e.message, true); }
+}
+function abrirTarea(id) {
+  const f = document.getElementById('f-tarea'); f.reset();
+  document.getElementById('sel-etapa').innerHTML = '<option value="">Sin etapa</option>' + S.etapas.filter(e => e.id).map(e => `<option value="${e.id}">${esc(e.nombre)}</option>`).join('');
+  document.getElementById('sel-persona').innerHTML = '<option value="">Sin responsable</option>' + personas.map(p => `<option value="${p.id}">${esc(p.nombre)} · ${esc(p.rol_nombre)}</option>`).join('');
+  tareaEdit = id ? tareas.find(t => t.id === id) : null;
+  document.getElementById('tit-tarea').textContent = tareaEdit ? 'Editar tarea' : 'Nueva tarea';
+  if (tareaEdit) llenarForm(f, tareaEdit); else { f.fecha_inicio.value = hoyISO(); f.fecha_fin.value = sumarDias(hoyISO(), 6); }
+  document.getElementById('dlg-tarea').showModal();
+}
+document.getElementById('f-tarea').addEventListener('submit', async ev => {
+  ev.preventDefault();
+  const d = datosForm(ev.target);
+  d.etapa_id = d.etapa_id ? Number(d.etapa_id) : null; d.persona_id = d.persona_id ? Number(d.persona_id) : null;
+  if (tareaEdit && d.persona_id === tareaEdit.persona_id && d.costo_hora_base === tareaEdit.costo_hora_base) d.costo_hora_base = null;
+  try { await api(tareaEdit ? `/tareas/${tareaEdit.id}` : `/proyectos/${PID}/tareas`, { method: tareaEdit ? 'PUT' : 'POST', body: d });
+    document.getElementById('dlg-tarea').close(); toast('Tarea guardada'); cargar(); }
+  catch (e) { toast(e.message, true); }
+});
+async function borrarTarea(id) {
+  if (!confirm('¿Borrar la tarea y sus horas cargadas?')) return;
+  await api('/tareas/' + id, { method: 'DELETE' }); toast('Tarea borrada'); cargar();
+}
+
+// ---------- etapas ----------
+async function abrirEtapa(id) {
+  const f = document.getElementById('f-etapa'); f.reset();
+  etapaEdit = id ? (await api(`/proyectos/${PID}/etapas`)).find(e => e.id === id) : null;
+  document.getElementById('tit-etapa').textContent = etapaEdit ? 'Etapa: ' + etapaEdit.nombre : 'Nueva etapa';
+  document.getElementById('btn-borrar-etapa').style.visibility = etapaEdit ? 'visible' : 'hidden';
+  if (etapaEdit) llenarForm(f, etapaEdit); else f.orden.value = S.etapas.length;
+  document.getElementById('dlg-etapa').showModal();
+}
+document.getElementById('f-etapa').addEventListener('submit', async ev => {
+  ev.preventDefault();
+  const d = datosForm(ev.target); d.orden = Number(d.orden || 0);
+  try { await api(etapaEdit ? `/etapas/${etapaEdit.id}` : `/proyectos/${PID}/etapas`, { method: etapaEdit ? 'PUT' : 'POST', body: d });
+    document.getElementById('dlg-etapa').close(); toast('Etapa guardada'); cargar(); }
+  catch (e) { toast(e.message, true); }
+});
+async function borrarEtapa() {
+  if (!confirm('¿Borrar la etapa? Sus tareas quedan sin etapa.')) return;
+  await api('/etapas/' + etapaEdit.id, { method: 'DELETE' }); document.getElementById('dlg-etapa').close(); cargar();
+}
+
+// ---------- proyecto ----------
+async function abrirProyecto() {
+  const cs = await api('/clientes');
+  document.getElementById('sel-cliente').innerHTML = cs.map(c => `<option value="${c.id}">${esc(c.nombre)}</option>`).join('');
+  llenarForm(document.getElementById('f-proyecto'), P);
+  document.getElementById('dlg-proyecto').showModal();
+}
+document.getElementById('f-proyecto').addEventListener('submit', async ev => {
+  ev.preventDefault();
+  const d = { ...P, ...datosForm(ev.target) }; d.cliente_id = Number(d.cliente_id);
+  try { await api('/proyectos/' + PID, { method: 'PUT', body: d }); document.getElementById('dlg-proyecto').close(); toast('Proyecto guardado'); cargar(); }
+  catch (e) { toast(e.message, true); }
+});
+async function borrarProyecto() {
+  if (!confirm('¿Borrar el proyecto con todas sus etapas, tareas, horas y gastos? No se puede deshacer.')) return;
+  await api('/proyectos/' + PID, { method: 'DELETE' }); location.href = 'proyectos.html';
+}
+
+// ---------- horas y gastos ----------
+async function cargarHorasGastos() {
+  const [hs, gs] = await Promise.all([api(`/horas?proyecto_id=${PID}`), api(`/proyectos/${PID}/gastos`)]);
+  document.getElementById('sel-hora-persona').innerHTML = personas.map(p => `<option value="${p.id}">${esc(p.nombre)}</option>`).join('');
+  document.getElementById('sel-hora-tarea').innerHTML = tareas.map(t => `<option value="${t.id}">${esc(t.nombre)}</option>`).join('');
+  const f = document.getElementById('f-hora'); if (!f.fecha.value) f.fecha.value = hoyISO();
+  document.getElementById('tabla-horas').innerHTML = hs.slice(0, 60).map(h => `<tr><td>${fmtFecha(h.fecha)}</td><td>${esc(h.persona_nombre)}</td>
+    <td class="small">${esc(h.tarea_nombre)}</td><td class="num">${fmtNum(h.horas, 2)}</td><td class="num">${fmtNum(h.horas * h.costo_hora_base)}</td>
+    <td class="num"><button class="link danger" onclick="borrarHora(${h.id})">Borrar</button></td></tr>`).join('')
+    + (hs.length > 60 ? `<tr><td colspan="6" class="muted small">… y ${hs.length - 60} registros más (están en el Excel del proyecto)</td></tr>` : '')
+    || '<tr><td colspan="6" class="muted">Sin horas cargadas.</td></tr>';
+  document.getElementById('tabla-gastos').innerHTML = gs.map(g => `<tr><td>${esc(g.concepto)}</td><td><span class="tag ${g.es_real ? 'emp' : ''}">${g.es_real ? 'Real' : 'Previsto'}</span></td>
+    <td>${fmtFecha(g.fecha)}</td><td class="num">${fmtNum(g.importe)} ${g.moneda}</td><td class="num">${fmtNum(g.importe_base)}</td>
+    <td class="num"><button class="link danger" onclick="borrarGasto(${g.id})">Borrar</button></td></tr>`).join('')
+    || '<tr><td colspan="6" class="muted">Sin gastos externos.</td></tr>';
+}
+document.getElementById('f-hora').addEventListener('submit', async ev => {
+  ev.preventDefault();
+  const d = datosForm(ev.target); d.persona_id = Number(d.persona_id); d.tarea_id = Number(d.tarea_id);
+  try { await api('/horas', { method: 'POST', body: d }); ev.target.horas.value = ''; ev.target.nota.value = ''; toast('Horas cargadas'); cargar(); }
+  catch (e) { toast(e.message, true); }
+});
+document.getElementById('f-gasto').addEventListener('submit', async ev => {
+  ev.preventDefault();
+  const d = datosForm(ev.target); d.es_real = d.es_real === 'true';
+  try { await api(`/proyectos/${PID}/gastos`, { method: 'POST', body: d }); ev.target.reset(); toast('Gasto agregado'); cargar(); }
+  catch (e) { toast(e.message, true); }
+});
+async function borrarHora(id) { await api('/horas/' + id, { method: 'DELETE' }); cargar(); }
+async function borrarGasto(id) { if (confirm('¿Borrar el gasto?')) { await api('/gastos/' + id, { method: 'DELETE' }); cargar(); } }
+
+window.addEventListener('resize', () => { clearTimeout(window._rz); window._rz = setTimeout(pintarGantt, 200); });
+function irATab(t) { const b = document.querySelector(`.tabs button[data-tab=${t}]`); if (b) b.click(); }
+cargar().then(() => {
+  cargarPresupuestos();
+  if (P.estado === 'en_presupuesto' || location.hash === '#presupuesto') irATab('presupuesto');
+});
+</script>
+</body>
+</html>

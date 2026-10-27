@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Inicio · Presupuestos</title>
+  <link rel="stylesheet" href="assets/app.css">
+</head>
+<body>
+<main>
+  <h1>Inicio</h1>
+  <p class="sub">Resumen de proyectos y de la base de costos.</p>
+  <div id="avisos"></div>
+  <div class="card" style="margin-bottom:16px">
+    <div style="display:flex;justify-content:space-between;align-items:center"><h2 style="margin:0">Proyectos en curso</h2><a href="proyectos.html">Ver cartera →</a></div>
+    <table style="margin-top:8px"><tbody id="proyectos"></tbody></table>
+  </div>
+  <div class="grid g4" id="kpis"></div>
+  <div class="grid g2" style="margin-top:16px">
+    <div class="card">
+      <h2>Costo por hora del equipo (<span class="mb"></span>)</h2>
+      <div class="chart-box"><canvas id="g-equipo"></canvas></div>
+    </div>
+    <div class="card">
+      <h2>Cómo se arma el precio</h2>
+      <p class="small muted">Cada hora presupuestada cuesta su costo directo más la tasa de estructura. El precio sale de dividir el costo por (1 − margen).</p>
+      <div class="formula">Costo hora = Costo directo + Tasa de estructura<br>Costo proyecto = Σ horas × costo hora + costos externos<br>Precio = Costo ÷ (1 − Margen)</div>
+      <p class="small muted" id="ej-margen"></p>
+    </div>
+  </div>
+</main>
+<script src="assets/vendor/chart.umd.min.js"></script>
+<script src="assets/app.js"></script>
+<script>
+async function cargarProyectos() {
+  const d = await api('/dashboard/cartera');
+  document.getElementById('proyectos').innerHTML = d.proyectos.map(p => `<tr style="cursor:pointer" onclick="location.href='proyecto.html?id=${p.proyecto_id}'">
+    <td><strong>${esc(p.nombre)}</strong><div class="small muted">${esc(p.cliente || '')}</div></td>
+    <td style="width:30%">${barraAvance(p.avance_ponderado, p.avance_planificado)}</td>
+    <td class="num">${fmtPct(p.avance_ponderado)}</td>
+    <td class="num">CPI <span class="v-${claseIndice(p.cpi)}">${fmtNum(p.cpi)}</span></td>
+    <td class="num">SPI <span class="v-${claseIndice(p.spi)}">${fmtNum(p.spi)}</span></td>
+    <td class="num">Margen <strong class="v-${claseMargen(p.margen_proyectado, d.margen_alerta)}">${fmtPct(p.margen_proyectado, 1)}</strong></td>
+    <td class="num"><button class="primary btn-exp" onclick="event.stopPropagation(); abrirExportar(${p.proyecto_id}, ${esc(JSON.stringify(p.nombre))}, ${p.precio_base || 0})">Exportar</button></td></tr>`).join('')
+    || '<tr><td class="muted">No hay proyectos en curso.</td></tr>';
+}
+cargarProyectos();
+
+async function cargar() {
+  const [cfg, tasa, ej] = await Promise.all([api('/config'), api('/tasa-estructura').catch(e => e), api('/ejemplo')]);
+  const avisos = [];
+  // las dos monedas de referencia: dólar y euro (o, si una es la base, la libra)
+  const refs = ['USD', 'EUR', 'GBP'].filter(m => m !== BASE).slice(0, 2);
+  const cots = await Promise.all(refs.map(m => api('/cotizaciones/vigente?moneda=' + m).catch(() => null)));
+  const c0 = cots[0];
+  if (!c0 || c0.fecha !== hoyISO())
+    avisos.push(`<div class="alert warn">No hay cotización de ${refs[0]} cargada para hoy${c0 ? ' (última: ' + fmtFecha(c0.fecha) + ')' : ''}. <a href="cotizaciones.html">Cargarla</a></div>`);
+  if (ej.cargado)
+    avisos.push('<div class="alert info">Estás viendo datos de EJEMPLO. Cuando cargues los de tu empresa, borralos desde <a href="configuracion.html">Configuración</a>.</div>');
+  document.getElementById('avisos').innerHTML = avisos.join('');
+
+  const t = tasa instanceof Error ? null : tasa;
+  const kpi = (l, v, n, h) => `<div class="card kpi"><div class="label">${l}${h ? ayuda(h) : ''}</div><div class="value">${v}</div><div class="note">${n || ''}</div></div>`;
+  document.getElementById('kpis').innerHTML = [
+    kpi('Tasa de estructura', t ? fmtBase(t.tasa_estructura_base) + '/h' : '—', t ? fmtBase(t.costos_fijos_anuales_base) + ' ÷ ' + fmtNum(t.horas_facturables_anuales, 0) + ' h' : (tasa.message || ''),
+        'Costos fijos anuales repartidos entre todas las horas facturables del año. Se suma a cada hora presupuestada.'),
+    kpi('Margen objetivo', fmtPct(cfg.margen_defecto), 'Markup equivalente ' + fmtPct(cfg.margen_defecto / (1 - cfg.margen_defecto), 1),
+        'Margen sobre el precio. El markup es el mismo resultado expresado sobre el costo.'),
+    ...refs.map((m, i) => kpi(`1 ${m} en ${BASE}`, cots[i] ? fmtNum(cots[i].valor, 2) : '—', cots[i] ? 'Cargada el ' + fmtFecha(cots[i].fecha) : 'Sin cargar')),
+  ].join('');
+
+  const m = cfg.margen_defecto;
+  document.getElementById('ej-margen').textContent =
+    `Con ${fmtPct(m)} de margen, un costo de ${fmtBase(1000000)} se cotiza en ${fmtBase(1000000 / (1 - m))}: la ganancia es ${fmtPct(m)} del precio, pero ${fmtPct(m / (1 - m), 1)} sobre el costo.`;
+
+  try {
+    const costos = await api('/costos-hora');
+    new Chart(document.getElementById('g-equipo'), {
+      type: 'bar',
+      data: { labels: costos.map(c => c.nombre),
+        datasets: [
+          { label: 'Costo directo', data: costos.map(c => c.costo_directo_base), backgroundColor: COLORES.acento },
+          { label: 'Estructura', data: costos.map(c => c.tasa_estructura_base), backgroundColor: COLORES.suave } ] },
+      options: { indexAxis: 'y', maintainAspectRatio: false, scales: { x: { stacked: true }, y: { stacked: true } },
+        plugins: { tooltip: { callbacks: { label: c => c.dataset.label + ': ' + fmtBase(c.raw) } } } }
+    });
+  } catch (e) { document.getElementById('g-equipo').outerHTML = `<p class="muted">${esc(e.message)}</p>`; }
+}
+cargar();
+</script>
+</body>
+</html>

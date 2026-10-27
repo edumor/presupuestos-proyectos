@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Horas · Presupuestos</title>
+  <link rel="stylesheet" href="assets/app.css">
+</head>
+<body>
+<main>
+  <h1>Carga de horas</h1>
+  <p class="sub">Planilla semanal por persona. Escribí las horas de cada día y guardá; el costo se calcula con la cotización de cada fecha.</p>
+  <div class="card">
+    <div class="bar-tools" style="justify-content:space-between;margin-bottom:12px">
+      <div class="bar-tools">
+        <label style="flex-direction:row;align-items:center;gap:8px">Persona <select id="sel-persona" onchange="cargar()"></select></label>
+        <button onclick="moverSemana(-7)">← Semana anterior</button>
+        <strong id="rango"></strong>
+        <button onclick="moverSemana(7)">Semana siguiente →</button>
+        <button onclick="irHoy()">Esta semana</button>
+      </div>
+      <div class="bar-tools">
+        <label style="flex-direction:row;align-items:center;gap:8px"><input type="checkbox" id="chk-todas" onchange="pintar()"> Mostrar todas las tareas activas</label>
+        <button class="primary" id="btn-guardar" onclick="guardar()" disabled>Guardar cambios</button>
+      </div>
+    </div>
+    <div style="overflow-x:auto"><table id="planilla"></table></div>
+    <p class="small muted">Se muestran las tareas donde la persona es responsable o ya cargó horas esa semana. Las celdas modificadas se resaltan hasta guardar.</p>
+  </div>
+</main>
+<script src="assets/app.js"></script>
+<script>
+const DIAS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+let lunes = lunesDe(hoyISO()), personas = [], tareas = [], horas = [], cambios = {};
+
+async function inicio() {
+  personas = await api('/personas?solo_activas=true');
+  document.getElementById('sel-persona').innerHTML = personas.map(p => `<option value="${p.id}">${esc(p.nombre)}</option>`).join('');
+  const proys = (await api('/proyectos')).filter(p => ['en_curso', 'pausado', 'en_presupuesto'].includes(p.estado));
+  const listas = await Promise.all(proys.map(p => api(`/proyectos/${p.id}/tareas`).then(ts => ts.map(t => ({ ...t, proyecto: p.nombre })))));
+  tareas = listas.flat();
+  cargar();
+}
+function moverSemana(n) { if (Object.keys(cambios).length && !confirm('Hay cambios sin guardar. ¿Descartarlos?')) return; lunes = sumarDias(lunes, n); cargar(); }
+function irHoy() { lunes = lunesDe(hoyISO()); cargar(); }
+
+async function cargar() {
+  cambios = {};
+  const pid = Number(document.getElementById('sel-persona').value);
+  horas = pid ? await api(`/horas?persona_id=${pid}&desde=${lunes}&hasta=${sumarDias(lunes, 6)}`) : [];
+  document.getElementById('rango').textContent = fmtFecha(lunes) + ' – ' + fmtFecha(sumarDias(lunes, 6));
+  pintar();
+}
+
+function pintar() {
+  const pid = Number(document.getElementById('sel-persona').value), dom = sumarDias(lunes, 6);
+  const todas = document.getElementById('chk-todas').checked;
+  const conHoras = new Set(horas.map(h => h.tarea_id));
+  const visibles = tareas.filter(t => conHoras.has(t.id) || ((todas || t.persona_id === pid) && t.fecha_inicio <= dom && t.fecha_fin >= lunes));
+  const dias = [...Array(7)].map((_, i) => sumarDias(lunes, i));
+  const celda = (t, d) => horas.filter(h => h.tarea_id === t.id && h.fecha === d).reduce((a, h) => a + h.horas, 0);
+  let html = `<thead><tr><th>Proyecto / tarea</th>${dias.map((d, i) => `<th class="num">${DIAS[i]} ${d.slice(8, 10)}</th>`).join('')}<th class="num total">Total</th></tr></thead><tbody>`;
+  const totDia = Array(7).fill(0);
+  visibles.forEach(t => {
+    let tot = 0;
+    html += `<tr><td><div class="small muted">${esc(t.proyecto)}</div>${esc(t.nombre)}</td>`;
+    dias.forEach((d, i) => {
+      const k = t.id + '|' + d, v = k in cambios ? cambios[k] : celda(t, d);
+      tot += Number(v) || 0; totDia[i] += Number(v) || 0;
+      const fuera = d < t.fecha_inicio || d > t.fecha_fin;
+      html += `<td class="num"><input class="celda ${k in cambios ? 'cambio' : ''}" type="number" min="0" max="24" step="0.25" value="${v || ''}"
+        style="${fuera ? 'background:#fafbfc' : ''}" title="${fuera ? 'Fuera del plazo previsto de la tarea' : ''}" onchange="cambiar('${k}', this)"></td>`;
+    });
+    html += `<td class="num total">${fmtNum(tot, 2)}</td></tr>`;
+  });
+  if (!visibles.length) html += `<tr><td colspan="9" class="muted">No hay tareas para esta persona en la semana. Tildá "Mostrar todas las tareas activas" para cargar en otra.</td></tr>`;
+  html += `</tbody><tfoot><tr><td class="total">Total del día</td>${totDia.map(v => `<td class="num total">${fmtNum(v, 2)}</td>`).join('')}<td class="num total">${fmtNum(totDia.reduce((a, b) => a + b, 0), 2)}</td></tr></tfoot>`;
+  document.getElementById('planilla').innerHTML = html;
+  document.getElementById('btn-guardar').disabled = !Object.keys(cambios).length;
+}
+function cambiar(k, el) { cambios[k] = el.value === '' ? 0 : Number(el.value); pintar(); }
+
+async function guardar() {
+  const pid = Number(document.getElementById('sel-persona').value), nuevos = [];
+  try {
+    for (const [k, v] of Object.entries(cambios)) {
+      const [tid, fecha] = k.split('|'), tarea_id = Number(tid);
+      const existentes = horas.filter(h => h.tarea_id === tarea_id && h.fecha === fecha);
+      if (existentes.length === 1 && v > 0) {
+        await api('/horas/' + existentes[0].id, { method: 'PUT', body: { tarea_id, persona_id: pid, fecha, horas: v, nota: existentes[0].nota } });
+      } else {
+        for (const h of existentes) await api('/horas/' + h.id, { method: 'DELETE' });
+        if (v > 0) nuevos.push({ tarea_id, persona_id: pid, fecha, horas: v });
+      }
+    }
+    if (nuevos.length) await api('/horas/lote', { method: 'POST', body: nuevos });
+    toast('Horas guardadas'); cargar();
+  } catch (e) { toast(e.message, true); }
+}
+window.addEventListener('beforeunload', e => { if (Object.keys(cambios).length) { e.preventDefault(); e.returnValue = ''; } });
+inicio();
+</script>
+</body>
+</html>

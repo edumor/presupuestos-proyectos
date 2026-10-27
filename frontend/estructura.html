@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Estructura · Presupuestos</title>
+  <link rel="stylesheet" href="assets/app.css">
+</head>
+<body>
+<main>
+  <h1>Estructura</h1>
+  <p class="sub">Costos fijos que no se facturan directamente. Se reparten entre todas las horas facturables del año.</p>
+  <div id="aviso"></div>
+  <div class="grid g4" id="kpis"></div>
+  <div class="grid g2" style="margin-top:16px">
+    <div class="card">
+      <h2>Costos fijos</h2>
+      <table><thead><tr><th>Concepto</th><th class="num">Importe</th><th class="num">Anual <span class="mb"></span></th><th></th></tr></thead><tbody id="tabla"></tbody></table>
+      <form class="row" id="f-costo" style="margin-top:16px">
+        <label style="flex:2;min-width:180px">Concepto<input name="concepto" required></label>
+        <label style="width:110px">Importe<input name="importe" type="number" step="0.01" min="0" required></label>
+        <label>Moneda<select name="moneda" data-monedas></select></label>
+        <label>Periodicidad<select name="periodicidad"><option value="mensual">Mensual</option><option value="anual">Anual</option></select></label>
+        <button class="primary" id="btn-guardar">Agregar</button>
+        <button type="button" id="btn-cancelar" style="display:none" onclick="cancelar()">Cancelar</button>
+      </form>
+    </div>
+    <div class="card">
+      <h2>Composición anual (<span class="mb"></span>)</h2>
+      <div class="chart-box"><canvas id="g-fijos"></canvas></div>
+    </div>
+  </div>
+</main>
+<script src="assets/vendor/chart.umd.min.js"></script>
+<script src="assets/app.js"></script>
+<script>
+let costos = [], editando = null, grafico;
+
+async function cargar() {
+  costos = await api('/costos-fijos');
+  let t = null;
+  try { t = await api('/tasa-estructura'); document.getElementById('aviso').innerHTML = ''; }
+  catch (e) { document.getElementById('aviso').innerHTML = `<div class="alert warn">${esc(e.message)}</div>`; }
+  const kpi = (l, v, n, h) => `<div class="card kpi"><div class="label">${l}${h ? ayuda(h) : ''}</div><div class="value">${v}</div><div class="note">${n}</div></div>`;
+  document.getElementById('kpis').innerHTML = t ? [
+    kpi('Costos fijos anuales', fmtBase(t.costos_fijos_anuales_base), costos.length + ' conceptos'),
+    kpi('Horas de empleados', fmtNum(t.horas_empleados, 0), 'horas anuales × utilización', 'Se calcula con los empleados activos y los parámetros de Configuración.'),
+    kpi('Horas de autónomos', fmtNum(t.horas_autonomos, 0), 'estimación anual', 'Cuántas horas estimás que facturan los autónomos en el año. Se edita en Configuración.'),
+    kpi('Tasa de estructura', fmtBase(t.tasa_estructura_base) + '/h', 'se suma a cada hora', 'Costos fijos anuales ÷ horas facturables anuales.'),
+  ].join('') : '';
+
+  document.getElementById('tabla').innerHTML = costos.map(c => `<tr>
+    <td>${esc(c.concepto)} ${c.es_ejemplo ? '<span class="tag ej">ejemplo</span>' : ''}</td>
+    <td class="num">${fmtNum(c.importe)} ${c.moneda}<div class="small muted">${c.periodicidad}</div></td>
+    <td class="num">${fmtNum(c.anual_base)}</td>
+    <td class="num"><button class="link" onclick="editar(${c.id})">Editar</button><button class="link danger" onclick="borrar(${c.id})">Borrar</button></td></tr>`).join('')
+    || '<tr><td colspan="4" class="muted">Sin costos fijos cargados.</td></tr>';
+
+  if (grafico) grafico.destroy();
+  const conDato = costos.filter(c => c.anual_base);
+  grafico = new Chart(document.getElementById('g-fijos'), {
+    type: 'doughnut',
+    data: { labels: conDato.map(c => c.concepto),
+      datasets: [{ data: conDato.map(c => c.anual_base), backgroundColor: ['#2456c8', '#5b82d9', '#9db5ea', '#c9d7f3', '#b7bec9', '#7d8796'] }] },
+    options: { maintainAspectRatio: false, plugins: { legend: { position: 'bottom' },
+      tooltip: { callbacks: { label: c => c.label + ': ' + fmtBase(c.raw) } } } }
+  });
+}
+
+function editar(id) {
+  editando = costos.find(c => c.id === id);
+  llenarForm(document.getElementById('f-costo'), editando);
+  document.getElementById('btn-guardar').textContent = 'Guardar';
+  document.getElementById('btn-cancelar').style.display = '';
+}
+function cancelar() {
+  editando = null; document.getElementById('f-costo').reset();
+  document.getElementById('btn-guardar').textContent = 'Agregar';
+  document.getElementById('btn-cancelar').style.display = 'none';
+}
+document.getElementById('f-costo').addEventListener('submit', async ev => {
+  ev.preventDefault();
+  try {
+    await api(editando ? `/costos-fijos/${editando.id}` : '/costos-fijos', { method: editando ? 'PUT' : 'POST', body: datosForm(ev.target) });
+    toast('Guardado'); cancelar(); cargar();
+  } catch (e) { toast(e.message, true); }
+});
+async function borrar(id) {
+  if (!confirm('¿Borrar este costo fijo?')) return;
+  await api(`/costos-fijos/${id}`, { method: 'DELETE' }); toast('Borrado'); cargar();
+}
+cargar();
+</script>
+</body>
+</html>

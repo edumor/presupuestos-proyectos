@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Proyectos · Presupuestos</title>
+  <link rel="stylesheet" href="assets/app.css">
+</head>
+<body>
+<main>
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap">
+    <div><h1>Proyectos</h1><p class="sub">Cartera de proyectos: avance, plazos y rentabilidad de cada uno.</p></div>
+    <div class="bar-tools">
+      <label style="flex-direction:row;align-items:center;gap:6px"><input type="checkbox" id="chk-term" onchange="cargar()"> Incluir terminados</label>
+      <button onclick="comprobarYDescargar('/api/export/cartera')">Excel cartera</button>
+      <button onclick="comprobarYDescargar('/api/export/base')">Excel base completa</button>
+      <button onclick="abrirPlantilla()">Plantilla de etapas</button>
+      <button class="primary" onclick="abrirNuevo()">+ Proyecto</button>
+    </div>
+  </div>
+  <div class="grid g4" id="kpis"></div>
+  <div class="card" style="margin-top:16px">
+    <table>
+      <thead><tr><th>Proyecto</th><th>Avance</th><th class="num">CPI</th><th class="num">SPI</th>
+        <th class="num">Precio</th><th class="num">Margen previsto</th><th class="num">Margen proyectado</th><th>Próximo hito</th><th></th></tr></thead>
+      <tbody id="tabla"></tbody>
+    </table>
+  </div>
+  <div class="grid g2" style="margin-top:16px">
+    <div class="card"><h2>Avance real vs planificado</h2><div class="chart-box"><canvas id="g-avance"></canvas></div></div>
+    <div class="card"><h2>Margen previsto vs proyectado</h2><div class="chart-box"><canvas id="g-margen"></canvas></div></div>
+  </div>
+</main>
+
+<dialog id="dlg-nuevo">
+  <h2>Nuevo proyecto</h2>
+  <form id="f-nuevo">
+    <div class="fields">
+      <label class="full">Nombre<input name="nombre" required></label>
+      <label class="full">Cliente
+        <div style="display:flex;gap:8px"><select name="cliente_id" id="sel-cliente" required style="flex:1"></select>
+        <button type="button" onclick="nuevoCliente()">+ Cliente</button></div></label>
+      <label>Inicio<input name="fecha_inicio" type="date" required></label>
+      <label>Fin<input name="fecha_fin" type="date" required></label>
+      <label>Precio acordado (<span class="mb"></span>)<input name="precio_base" type="number" step="0.01" min="0"></label>
+      <label>Estado<select name="estado"><option value="en_curso">En curso</option><option value="en_presupuesto">En presupuesto</option></select></label>
+      <label class="full">Alcance<textarea name="alcance" rows="2"></textarea></label>
+      <label class="full" style="flex-direction:row;align-items:center;gap:8px"><input type="checkbox" name="usar_plantilla" checked> Crear etapas desde la plantilla (con fechas sugeridas)</label>
+    </div>
+    <div class="actions"><button type="button" onclick="this.closest('dialog').close()">Cancelar</button><button class="primary">Crear</button></div>
+  </form>
+</dialog>
+
+<dialog id="dlg-plantilla" style="width:min(760px,94vw)">
+  <h2>Plantilla de etapas</h2>
+  <p class="small muted">Se usa al crear proyectos nuevos; cada proyecto puede cambiar sus etapas después. Peso = cuánto cuenta la etapa en el avance total. Duración = parte del plazo del proyecto.</p>
+  <table><thead><tr><th>Etapa</th><th class="num">Peso %</th><th class="num">Duración %</th><th>Hito de cierre</th><th></th></tr></thead><tbody id="tabla-plantilla"></tbody></table>
+  <p class="small" id="suma-plantilla"></p>
+  <div class="actions" style="justify-content:space-between"><button type="button" onclick="filaPlantilla({})">+ Etapa</button>
+    <div style="display:flex;gap:8px"><button onclick="this.closest('dialog').close()">Cancelar</button><button class="primary" onclick="guardarPlantilla()">Guardar</button></div></div>
+</dialog>
+
+<script src="assets/vendor/chart.umd.min.js"></script>
+<script src="assets/app.js"></script>
+<script>
+let graficos = [];
+document.querySelector('th:nth-child(2)').innerHTML = 'Avance ' + ayuda('Barra: avance ponderado por etapas. Línea negra: lo que debería estar hecho a hoy según las fechas.');
+
+async function cargar() {
+  const d = await api('/dashboard/cartera?incluir_terminados=' + document.getElementById('chk-term').checked);
+  const r = d.resumen, al = d.margen_alerta;
+  const kpi = (l, v, n, cls, h) => `<div class="card kpi"><div class="label">${l}${h ? ayuda(h) : ''}</div><div class="value ${cls || ''}">${v}</div><div class="note">${n}</div></div>`;
+  document.getElementById('kpis').innerHTML = [
+    kpi('Proyectos', r.activos, r.en_riesgo ? `<span class="v-bad">${r.en_riesgo} en riesgo</span>` : 'ninguno en riesgo', '', 'En riesgo: CPI o SPI por debajo de 0,90.'),
+    kpi('Facturación', fmtBase(r.facturacion_base), 'suma de precios acordados <span id="fact-eq"></span>'),
+    kpi('Margen proyectado', fmtPct(r.margen_proyectado, 1), 'previsto ' + fmtPct(r.margen_previsto, 1), claseMargen(r.margen_proyectado, al),
+        'Margen si los proyectos siguen gastando al ritmo actual (precio − costo final estimado) ÷ precio.'),
+    kpi('Etapas atrasadas', r.etapas_atrasadas, 'fin previsto vencido sin terminar', r.etapas_atrasadas ? 'bad' : 'ok'),
+  ].join('');
+  equivalente(r.facturacion_base).then(eq => { const e = document.getElementById('fact-eq'); if (e && eq) e.textContent = '· ' + eq; });
+
+  const ps = d.proyectos;
+  document.getElementById('tabla').innerHTML = ps.map(p => `<tr style="cursor:pointer" onclick="location.href='proyecto.html?id=${p.proyecto_id}'">
+    <td><strong>${esc(p.nombre)}</strong><div class="small muted">${esc(p.cliente || '')} · ${fmtFecha(p.fecha_inicio)} → ${fmtFecha(p.fecha_fin)}</div></td>
+    <td style="min-width:150px">${barraAvance(p.avance_ponderado, p.avance_planificado)}<div class="small muted" style="margin-top:4px">${fmtPct(p.avance_ponderado)} · plan ${fmtPct(p.avance_planificado)}</div></td>
+    <td class="num v-${claseIndice(p.cpi)}">${fmtNum(p.cpi)}</td>
+    <td class="num v-${claseIndice(p.spi)}">${fmtNum(p.spi)}</td>
+    <td class="num">${fmtBase(p.precio_base)}</td>
+    <td class="num">${fmtPct(p.margen_previsto, 1)}</td>
+    <td class="num v-${claseMargen(p.margen_proyectado, al)}"><strong>${fmtPct(p.margen_proyectado, 1)}</strong></td>
+    <td class="small">${p.proximo_hito ? esc(p.proximo_hito.hito) + '<div class="muted">' + fmtFecha(p.proximo_hito.fecha) + '</div>' : '—'}</td>
+    <td class="num"><button class="primary btn-exp" onclick="event.stopPropagation(); abrirExportar(${p.proyecto_id}, ${esc(JSON.stringify(p.nombre))}, ${p.precio_base || 0})">Exportar</button></td></tr>`).join('')
+    || '<tr><td colspan="9" class="muted">No hay proyectos. Creá uno o cargá los datos de ejemplo en Configuración.</td></tr>';
+
+  graficos.forEach(g => g.destroy());
+  const labels = ps.map(p => p.nombre);
+  const pct = { scales: { y: { ticks: { callback: v => fmtPct(v) } } }, maintainAspectRatio: false,
+    plugins: { tooltip: { callbacks: { label: c => c.dataset.label + ': ' + fmtPct(c.raw, 1) } } } };
+  graficos = [
+    new Chart(document.getElementById('g-avance'), { type: 'bar', options: { ...pct, scales: { y: { min: 0, max: 1, ticks: { callback: v => fmtPct(v) } } } },
+      data: { labels, datasets: [
+        { label: 'Real', data: ps.map(p => p.avance_ponderado), backgroundColor: COLORES.acento },
+        { label: 'Planificado', data: ps.map(p => p.avance_planificado), backgroundColor: COLORES.gris } ] } }),
+    new Chart(document.getElementById('g-margen'), { type: 'bar', options: pct,
+      data: { labels, datasets: [
+        { label: 'Previsto', data: ps.map(p => p.margen_previsto), backgroundColor: COLORES.gris },
+        { label: 'Proyectado', data: ps.map(p => p.margen_proyectado), backgroundColor: ps.map(p => (p.margen_proyectado ?? 1) < al ? COLORES.warn : COLORES.acento) } ] } }),
+  ];
+}
+
+// ---- nuevo proyecto ----
+async function llenarClientes(sel) {
+  const cs = await api('/clientes');
+  document.getElementById('sel-cliente').innerHTML = cs.map(c => `<option value="${c.id}" ${c.id === sel ? 'selected' : ''}>${esc(c.nombre)}</option>`).join('');
+}
+async function abrirNuevo() {
+  const f = document.getElementById('f-nuevo'); f.reset();
+  f.fecha_inicio.value = hoyISO(); f.fecha_fin.value = sumarDias(hoyISO(), 83);
+  await llenarClientes();
+  document.getElementById('dlg-nuevo').showModal();
+}
+async function nuevoCliente() {
+  const nombre = prompt('Nombre del cliente');
+  if (!nombre) return;
+  const c = await api('/clientes', { method: 'POST', body: { nombre } });
+  await llenarClientes(c.id);
+}
+document.getElementById('f-nuevo').addEventListener('submit', async ev => {
+  ev.preventDefault();
+  const d = datosForm(ev.target); d.cliente_id = Number(d.cliente_id);
+  try { const p = await api('/proyectos', { method: 'POST', body: d }); location.href = 'proyecto.html?id=' + p.id; }
+  catch (e) { toast(e.message, true); }
+});
+
+// ---- plantilla ----
+function filaPlantilla(e) {
+  document.getElementById('tabla-plantilla').insertAdjacentHTML('beforeend', `<tr>
+    <td><input name="nombre" value="${esc(e.nombre || '')}" style="width:100%"></td>
+    <td class="num"><input class="celda" name="peso" type="number" step="1" min="0" max="100" value="${e.peso != null ? Math.round(e.peso * 100) : ''}" oninput="sumaPlantilla()"></td>
+    <td class="num"><input class="celda" name="pct_duracion" type="number" step="1" min="0" max="100" value="${e.pct_duracion != null ? Math.round(e.pct_duracion * 100) : ''}" oninput="sumaPlantilla()"></td>
+    <td><input name="hito" value="${esc(e.hito || '')}" style="width:100%"></td>
+    <td><button class="link danger" onclick="this.closest('tr').remove();sumaPlantilla()">Quitar</button></td></tr>`);
+  sumaPlantilla();
+}
+function leerPlantilla() {
+  return [...document.querySelectorAll('#tabla-plantilla tr')].map(tr => {
+    const v = n => tr.querySelector(`[name=${n}]`).value;
+    return { nombre: v('nombre').trim(), peso: v('peso') === '' ? null : v('peso') / 100,
+      pct_duracion: v('pct_duracion') === '' ? null : v('pct_duracion') / 100, hito: v('hito') || null };
+  }).filter(e => e.nombre);
+}
+function sumaPlantilla() {
+  const es = leerPlantilla(), sp = es.reduce((a, e) => a + (e.peso || 0), 0), sd = es.reduce((a, e) => a + (e.pct_duracion || 0), 0);
+  const ok = x => Math.abs(x - 1) < 0.005;
+  document.getElementById('suma-plantilla').innerHTML = `Suma de pesos: <strong class="v-${ok(sp) ? 'ok' : 'warn'}">${fmtPct(sp)}</strong> · Suma de duraciones: <strong class="v-${ok(sd) ? 'ok' : 'warn'}">${fmtPct(sd)}</strong> (lo ideal es 100% en ambos)`;
+}
+async function abrirPlantilla() {
+  document.getElementById('tabla-plantilla').innerHTML = '';
+  (await api('/plantilla-etapas')).forEach(filaPlantilla);
+  document.getElementById('dlg-plantilla').showModal();
+}
+async function guardarPlantilla() {
+  try { await api('/plantilla-etapas', { method: 'PUT', body: leerPlantilla() }); toast('Plantilla guardada'); document.getElementById('dlg-plantilla').close(); }
+  catch (e) { toast(e.message, true); }
+}
+cargar();
+</script>
+</body>
+</html>

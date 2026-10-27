@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Equipo · Presupuestos</title>
+  <link rel="stylesheet" href="assets/app.css">
+</head>
+<body>
+<main>
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap">
+    <div><h1>Equipo</h1><p class="sub">Empleados en relación de dependencia y autónomos. El costo por hora se calcula en <span class="mb"></span> con la cotización vigente.</p></div>
+    <div style="display:flex;gap:8px"><button onclick="abrirRoles()">Roles</button><button class="primary" onclick="abrirPersona()">+ Persona</button></div>
+  </div>
+  <div id="aviso"></div>
+  <div class="card">
+    <table>
+      <thead><tr><th>Nombre</th><th>Rol</th><th>Tipo</th><th class="num">Base</th>
+        <th class="num">Directo <span class="mb"></span>/h</th><th class="num">Estructura</th><th class="num">Total <span class="mb"></span>/h</th><th></th></tr></thead>
+      <tbody id="tabla"></tbody>
+    </table>
+  </div>
+  <div class="card" style="margin-top:16px">
+    <h2>Carga semanal del equipo</h2>
+    <div class="bar-tools" style="margin-bottom:8px"><label style="flex-direction:row;align-items:center;gap:8px">Persona <select id="sel-carga" onchange="pintarCarga()"></select></label>
+      <span class="small muted">Barras: horas reales cargadas. Línea: horas planificadas según las tareas asignadas. Punteada: capacidad semanal (empleados).</span></div>
+    <div class="chart-box"><canvas id="g-carga"></canvas></div>
+  </div>
+</main>
+<script src="assets/vendor/chart.umd.min.js"></script>
+
+<dialog id="dlg-persona">
+  <h2 id="dlg-titulo">Persona</h2>
+  <form id="f-persona" method="dialog">
+    <div class="fields">
+      <label class="full">Nombre<input name="nombre" required></label>
+      <label>Rol<select name="rol_id" required id="sel-rol"></select></label>
+      <label>Tipo<select name="tipo" id="sel-tipo" onchange="ajustarTipo()">
+        <option value="empleado">Empleado</option><option value="autonomo">Autónomo</option></select></label>
+      <label>Moneda<select name="moneda" data-monedas></select></label>
+      <label class="emp">Sueldo bruto anual (con aguinaldo: 13 sueldos)<input name="sueldo_bruto_anual" type="number" step="0.01" min="0"></label>
+      <label class="emp">% contribuciones patronales <input name="ss_empresa" type="number" step="0.01" min="0" max="100" data-pct="1" placeholder="por defecto"></label>
+      <label class="aut">Tarifa por hora<input name="tarifa_hora" type="number" step="0.01" min="0"></label>
+      <label class="full" style="flex-direction:row;align-items:center;gap:8px"><input type="checkbox" name="activo" checked> Activo</label>
+    </div>
+    <div class="actions"><button type="button" onclick="this.closest('dialog').close()">Cancelar</button><button class="primary" value="ok">Guardar</button></div>
+  </form>
+</dialog>
+
+<dialog id="dlg-roles">
+  <h2>Roles</h2>
+  <table><tbody id="tabla-roles"></tbody></table>
+  <form class="row" style="margin-top:12px" onsubmit="crearRol(event)">
+    <label style="flex:1">Nuevo rol<input name="nombre" required></label><button class="primary">Agregar</button>
+  </form>
+  <div class="actions"><button onclick="this.closest('dialog').close();cargar()">Cerrar</button></div>
+</dialog>
+
+<script src="assets/app.js"></script>
+<script>
+let personas = [], roles = [], editando = null;
+
+async function cargar() {
+  [personas, roles] = await Promise.all([api('/personas'), api('/roles')]);
+  let costos = {}, aviso = '';
+  try { (await api('/costos-hora')).forEach(c => costos[c.persona_id] = c); }
+  catch (e) { aviso = `<div class="alert warn">${esc(e.message)} <a href="cotizaciones.html">Ir a Cotizaciones</a></div>`; }
+  document.getElementById('aviso').innerHTML = aviso;
+  document.getElementById('tabla').innerHTML = personas.map(p => {
+    const c = costos[p.id];
+    const base = p.tipo === 'empleado' ? fmtNum(p.sueldo_bruto_anual, 0) + ' ' + p.moneda + '/año' : fmtNum(p.tarifa_hora) + ' ' + p.moneda + '/h';
+    return `<tr style="${p.activo ? '' : 'opacity:.5'}">
+      <td>${esc(p.nombre)} ${p.es_ejemplo ? '<span class="tag ej">ejemplo</span>' : ''}</td>
+      <td>${esc(p.rol_nombre)}</td>
+      <td><span class="tag ${p.tipo === 'empleado' ? 'emp' : ''}">${p.tipo === 'empleado' ? 'Empleado' : 'Autónomo'}</span></td>
+      <td class="num">${base}</td>
+      <td class="num">${c ? fmtNum(c.costo_directo_base) + ayuda(c.detalle) : '—'}</td>
+      <td class="num">${c ? fmtNum(c.tasa_estructura_base) : '—'}</td>
+      <td class="num"><strong>${c ? fmtNum(c.costo_total_base) : (p.activo ? '—' : 'inactivo')}</strong></td>
+      <td class="num"><button class="link" onclick="abrirPersona(${p.id})">Editar</button><button class="link danger" onclick="borrarPersona(${p.id})">Borrar</button></td></tr>`;
+  }).join('') || '<tr><td colspan="8" class="muted">Todavía no hay personas. Agregá la primera o cargá los datos de ejemplo en Configuración.</td></tr>';
+}
+
+function ajustarTipo() {
+  const emp = document.getElementById('sel-tipo').value === 'empleado';
+  document.querySelectorAll('#f-persona .emp').forEach(e => e.style.display = emp ? '' : 'none');
+  document.querySelectorAll('#f-persona .aut').forEach(e => e.style.display = emp ? 'none' : '');
+}
+
+function abrirPersona(id) {
+  const f = document.getElementById('f-persona'); f.reset();
+  document.getElementById('sel-rol').innerHTML = roles.map(r => `<option value="${r.id}">${esc(r.nombre)}</option>`).join('');
+  editando = id ? personas.find(p => p.id === id) : null;
+  document.getElementById('dlg-titulo').textContent = editando ? 'Editar persona' : 'Nueva persona';
+  if (editando) llenarForm(f, editando);
+  ajustarTipo();
+  document.getElementById('dlg-persona').showModal();
+}
+
+document.getElementById('f-persona').addEventListener('submit', async ev => {
+  ev.preventDefault();
+  const d = datosForm(ev.target);
+  d.rol_id = Number(d.rol_id);
+  if (d.tipo === 'empleado') d.tarifa_hora = null; else { d.sueldo_bruto_anual = null; d.ss_empresa = null; }
+  try {
+    await api(editando ? `/personas/${editando.id}` : '/personas', { method: editando ? 'PUT' : 'POST', body: d });
+    document.getElementById('dlg-persona').close(); toast('Guardado'); cargar();
+  } catch (e) { toast(e.message, true); }
+});
+
+async function borrarPersona(id) {
+  if (!confirm('¿Borrar esta persona?')) return;
+  try { await api(`/personas/${id}`, { method: 'DELETE' }); toast('Borrada'); cargar(); }
+  catch (e) { toast(e.message, true); }
+}
+
+function pintarRoles() {
+  document.getElementById('tabla-roles').innerHTML = roles.map(r =>
+    `<tr><td>${esc(r.nombre)}</td><td class="num"><button class="link danger" onclick="borrarRol(${r.id})">Borrar</button></td></tr>`).join('');
+}
+function abrirRoles() { pintarRoles(); document.getElementById('dlg-roles').showModal(); }
+async function crearRol(ev) {
+  ev.preventDefault();
+  try { await api('/roles', { method: 'POST', body: { nombre: ev.target.nombre.value } }); ev.target.reset(); roles = await api('/roles'); pintarRoles(); }
+  catch (e) { toast(e.message, true); }
+}
+async function borrarRol(id) {
+  try { await api(`/roles/${id}`, { method: 'DELETE' }); roles = await api('/roles'); pintarRoles(); }
+  catch (e) { toast(e.message, true); }
+}
+let carga = null, gCarga = null;
+async function cargarCarga() {
+  carga = await api('/dashboard/equipo');
+  document.getElementById('sel-carga').innerHTML = '<option value="">Todo el equipo</option>' + carga.personas.map(p => `<option value="${p.persona_id}">${esc(p.nombre)}</option>`).join('');
+  pintarCarga();
+}
+function pintarCarga() {
+  const sel = document.getElementById('sel-carga').value;
+  const ps = sel ? carga.personas.filter(p => String(p.persona_id) === sel) : carga.personas;
+  if (!ps.length) return;
+  const semanas = ps[0].semanas.map(s => s.semana);
+  const suma = k => semanas.map((_, i) => ps.reduce((a, p) => a + p.semanas[i][k], 0));
+  const cap = ps.reduce((a, p) => a + (p.capacidad_semanal || 0), 0);
+  const hoySem = lunesDe(hoyISO());
+  if (gCarga) gCarga.destroy();
+  gCarga = new Chart(document.getElementById('g-carga'), {
+    data: { labels: semanas.map(s => (s === hoySem ? 'Esta sem. ' : '') + fmtFecha(s).slice(0, 5)), datasets: [
+      { type: 'bar', label: 'Horas reales', data: suma('reales'), backgroundColor: semanas.map(s => s > hoySem ? 'transparent' : COLORES.acento), order: 2 },
+      { type: 'line', label: 'Horas planificadas', data: suma('planificadas'), borderColor: COLORES.warn, backgroundColor: COLORES.warn, tension: .2, order: 1 },
+      ...(cap ? [{ type: 'line', label: 'Capacidad (empleados)', data: semanas.map(() => cap), borderColor: COLORES.gris, borderDash: [5, 4], pointRadius: 0, order: 0 }] : []) ] },
+    options: { maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
+      plugins: { tooltip: { callbacks: { label: c => c.dataset.label + ': ' + fmtNum(c.raw, 1) + ' h' } } },
+      scales: { y: { beginAtZero: true, title: { display: true, text: 'horas' } } } }
+  });
+}
+cargar();
+cargarCarga();
+</script>
+</body>
+</html>

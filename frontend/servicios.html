@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Servicios · Presupuestos</title>
+  <link rel="stylesheet" href="assets/app.css">
+</head>
+<body>
+<main>
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap">
+    <div><h1>Catálogo de servicios</h1>
+      <p class="sub">Los servicios que vendés, con el rol que los hace, las horas habituales y la etapa del proyecto donde van. Se usan para armar los presupuestos.</p></div>
+    <div class="bar-tools"><label style="flex-direction:row;align-items:center;gap:6px"><input type="checkbox" id="chk-inactivos" onchange="cargar()"> Ver inactivos</label>
+      <button class="primary" onclick="abrir()">+ Servicio</button></div>
+  </div>
+  <div class="card"><table>
+    <thead><tr><th>Servicio</th><th>Rol sugerido</th><th>Etapa</th><th class="num">Horas</th><th class="num">Costo estimado</th><th class="num">Precio sugerido</th><th></th></tr></thead>
+    <tbody id="tabla"></tbody></table>
+    <p class="small muted">Costo estimado: horas × costo promedio por hora del rol (incluye estructura). Precio sugerido: con el margen objetivo de Configuración. Los servicios en "% sobre el total" (por ejemplo, gestión) suman ese porcentaje de las horas de los demás ítems del presupuesto.</p>
+  </div>
+</main>
+
+<dialog id="dlg">
+  <h2 id="dlg-tit">Servicio</h2>
+  <form id="f">
+    <div class="fields">
+      <label class="full">Nombre<input name="nombre" required maxlength="120"></label>
+      <label class="full">Descripción<textarea name="descripcion" rows="2"></textarea></label>
+      <label>Rol sugerido<select name="rol_sugerido_id" id="sel-rol"></select></label>
+      <label>Etapa sugerida<input name="etapa_sugerida" list="lista-etapas" maxlength="120"></label>
+      <label>Horas sugeridas<input name="horas_sugeridas" type="number" step="0.5" min="0"></label>
+      <label>o % sobre el total<input name="pct_sobre_total" type="number" step="1" min="0" max="100" data-pct="1"></label>
+      <label class="full" style="flex-direction:row;align-items:center;gap:8px"><input type="checkbox" name="activo" checked> Activo (aparece al armar presupuestos)</label>
+    </div>
+    <datalist id="lista-etapas"></datalist>
+    <div class="actions" style="justify-content:space-between"><button type="button" class="danger" id="btn-borrar" onclick="borrar()">Borrar</button>
+      <div style="display:flex;gap:8px"><button type="button" onclick="this.closest('dialog').close()">Cancelar</button><button class="primary">Guardar</button></div></div>
+  </form>
+</dialog>
+
+<script src="assets/app.js"></script>
+<script>
+let servicios = [], roles = [], costosRol = {}, edit = null, margen = 0.35;
+const f = document.getElementById('f');
+
+async function cargar() {
+  const [ss, rs, costos, cfg, plantilla] = await Promise.all([api('/servicios'), api('/roles'),
+    api('/costos-hora').catch(() => []), api('/config'), api('/plantilla-etapas')]);
+  servicios = ss; roles = rs; margen = cfg.margen_defecto;
+  costosRol = {};
+  const personas = await api('/personas?solo_activas=true');
+  const rolDe = Object.fromEntries(personas.map(p => [p.id, p.rol_id]));
+  costos.forEach(c => { const r = rolDe[c.persona_id]; if (r) (costosRol[r] = costosRol[r] || []).push(c.costo_total_base); });
+  document.getElementById('sel-rol').innerHTML = '<option value="">—</option>' + roles.map(r => `<option value="${r.id}">${esc(r.nombre)}</option>`).join('');
+  document.getElementById('lista-etapas').innerHTML = plantilla.map(e => `<option value="${esc(e.nombre)}">`).join('');
+  const ver = document.getElementById('chk-inactivos').checked;
+  document.getElementById('tabla').innerHTML = servicios.filter(s => ver || s.activo).map(s => {
+    const cs = costosRol[s.rol_sugerido_id], ch = cs ? cs.reduce((a, b) => a + b, 0) / cs.length : null;
+    const costo = s.horas_sugeridas && ch != null ? s.horas_sugeridas * ch : null;
+    return `<tr style="cursor:pointer" onclick="abrir(${s.id})"><td><strong>${esc(s.nombre)}</strong>${s.es_ejemplo ? ' <span class="tag ej">EJEMPLO</span>' : ''}${s.activo ? '' : ' <span class="tag">inactivo</span>'}
+      ${s.descripcion ? `<div class="small muted">${esc(s.descripcion)}</div>` : ''}</td>
+      <td>${esc(s.rol_nombre || '—')}</td><td>${esc(s.etapa_sugerida || '—')}</td>
+      <td class="num">${s.pct_sobre_total ? fmtPct(s.pct_sobre_total) + ' s/total' : fmtNum(s.horas_sugeridas, 1)}</td>
+      <td class="num">${costo != null ? fmtBase(costo) : '—'}</td><td class="num">${costo != null ? fmtBase(costo / (1 - margen)) : '—'}</td>
+      <td class="num"><button class="link">Editar</button></td></tr>`;
+  }).join('') || '<tr><td colspan="7" class="muted">Sin servicios. Agregá los que vendés con "+ Servicio".</td></tr>';
+}
+
+function abrir(id) {
+  edit = servicios.find(s => s.id === id) || null;
+  f.reset();
+  llenarForm(f, edit || { activo: true });
+  document.getElementById('dlg-tit').textContent = edit ? 'Editar servicio' : 'Nuevo servicio';
+  document.getElementById('btn-borrar').hidden = !edit;
+  document.getElementById('dlg').showModal();
+}
+f.addEventListener('submit', async ev => {
+  ev.preventDefault();
+  const d = datosForm(f);
+  d.rol_sugerido_id = d.rol_sugerido_id ? Number(d.rol_sugerido_id) : null;
+  try {
+    await api(edit ? '/servicios/' + edit.id : '/servicios', { method: edit ? 'PUT' : 'POST', body: d });
+    document.getElementById('dlg').close(); toast('Servicio guardado'); cargar();
+  } catch (e) { toast(e.message, true); }
+});
+async function borrar() {
+  if (!confirm('¿Borrar este servicio? Si ya se usó en presupuestos, queda inactivo.')) return;
+  await api('/servicios/' + edit.id, { method: 'DELETE' }); document.getElementById('dlg').close(); cargar();
+}
+cargar();
+</script>
+</body>
+</html>
