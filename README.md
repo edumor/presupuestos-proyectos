@@ -1,5 +1,9 @@
 # Presupuestos y seguimiento de proyectos
 
+https://github.com/user-attachments/assets/3ca88438-2c13-431a-82d8-eaf357ab9e7c
+
+
+
 Aplicación de escritorio para **agencias y consultoras de marketing digital** que presupuestan
 proyectos de alcance cerrado cotizados por hora y necesitan saber, semana a semana, si cada
 proyecto va en tiempo y si va a dejar el margen esperado.
