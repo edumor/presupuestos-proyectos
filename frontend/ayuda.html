@@ -27,7 +27,7 @@
 <body>
 <main style="max-width:1180px">
   <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap">
-    <div><h1>Ayuda</h1><p class="sub">Manual de uso — Presupuestos y seguimiento de proyectos · versión 0.8.0</p></div>
+    <div><h1>Ayuda</h1><p class="sub">Manual de uso — Presupuestos y seguimiento de proyectos · versión 0.8.1</p></div>
     <a href="manual.pdf" download><button>Descargar el manual en PDF</button></a>
   </div>
   <div class="manual">
@@ -44,7 +44,7 @@
 <p>Todo funciona en tu computadora, sin internet. Los importes se calculan en una <strong>moneda base</strong> que se elige al empezar: por defecto, <strong>pesos argentinos (ARS)</strong>. Los sueldos, tarifas o gastos en otra moneda (dólares, euros, reales…) se convierten con las cotizaciones que cargás, y las propuestas pueden mostrar también el <strong>equivalente en dólares (USD)</strong>.</p>
 <h2 id="2-instalacion">2. Instalación</h2>
 <ol>
-<li>Abrí el instalador <strong>Presupuestos-Setup-0.8.0.exe</strong> (el número cambia con cada versión).</li>
+<li>Abrí el instalador <strong>Presupuestos-Setup-0.8.1.exe</strong> (el número cambia con cada versión).</li>
 <li>Windows puede mostrar el aviso <strong>"Windows protegió su PC"</strong>, porque el programa no tiene firma digital comercial. Hacé clic en <strong>Más información</strong> y después en <strong>Ejecutar de todos modos</strong>. Es un aviso normal para programas sin firma comercial.</li>
 <li>Seguí el asistente: <strong>Siguiente → Instalar → Finalizar</strong>. No pide contraseña de administrador.</li>
 <li>Al terminar queda un acceso directo <strong>Presupuestos</strong> en el escritorio y en el menú Inicio. En el menú Inicio también encontrás este manual y la carpeta de datos.</li>
@@ -596,7 +596,7 @@
 <h2 id="11-actualizaciones">11. Actualizaciones</h2>
 <p>Al abrir el programa, si hay internet, se consulta si hay una versión nueva publicada. Si la hay, aparece un aviso verde arriba con el enlace para <strong>descargar el instalador</strong> y ver las novedades. Con la <strong>×</strong> se oculta el aviso hasta la próxima versión. El programa solo lee el número de versión publicado en GitHub, no envía ningún dato. Se puede desactivar en <strong>Configuración → Licencia y actualizaciones</strong>.</p>
 <figure><img alt="Aviso de versión nueva" src="assets/manual/32_aviso_version.png"><figcaption>Aviso de versión nueva</figcaption></figure>
-<p>Cuando recibas una versión nueva (por ejemplo <strong>Presupuestos-Setup-0.8.0.exe</strong>), cerrá el programa y ejecutá el instalador nuevo: reemplaza el programa y conserva todos los datos. La base se adapta sola a la versión nueva la primera vez que la abrís.</p>
+<p>Cuando recibas una versión nueva (por ejemplo <strong>Presupuestos-Setup-0.8.1.exe</strong>), cerrá el programa y ejecutá el instalador nuevo: reemplaza el programa y conserva todos los datos. La base se adapta sola a la versión nueva la primera vez que la abrís.</p>
 <p>Si venías usando una versión anterior en dólares, se conservan todos los importes y la moneda base sigue siendo <strong>USD</strong>. El logo que traía esa versión ya no viene incluido: si querés verlo en la barra, cargalo en <strong>Configuración → Datos de la empresa</strong>.</p>
 <h2 id="12-problemas-frecuentes">12. Problemas frecuentes</h2>
 <table>
@@ -607,6 +607,10 @@
 </tr>
 </thead>
 <tbody>
+<tr>
+<td><strong>Traer del BCRA</strong> o <strong>Actualizar desde el BCRA</strong> dice «No se pudo conectar con el BCRA»</td>
+<td>Abrí en el navegador https://api.bcra.gob.ar/estadisticascambiarias/v1.0/Cotizaciones. Si ves datos, internet funciona: el programa reintenta solo con el sistema de red de Windows (útil con proxies de empresa); si aun así falla, el mensaje dice el motivo. Si el navegador tampoco abre, el servicio del BCRA está caído o la red lo bloquea: cargá la cotización a mano y probá más tarde</td>
+</tr>
 <tr>
 <td>Windows dice "Windows protegió su PC"</td>
 <td><strong>Más información → Ejecutar de todos modos</strong> (sección 2)</td>
