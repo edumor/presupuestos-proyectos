@@ -24,6 +24,11 @@ del usuario y se respalda sola cada vez que se abre el programa.
   costo final estimado (EAC) y **margen proyectado**, con semáforos.
 - **Cronograma (Gantt)** previsto vs. real, hitos, aprobaciones del cliente y curva S.
 - **Cartera**: todos los proyectos activos, riesgos y carga semanal del equipo.
+- **Facturación y cobros**: registro interno de facturas por hito (el comprobante fiscal se emite en
+  ARCA/AFIP), cobros parciales, vencimientos y **diferencia de cambio** en contratos en dólares.
+- **Rentabilidad por período**: ingreso devengado, costo y margen por **cliente**, **proyecto**,
+  **servicio** (horas presupuestadas vs. reales) y **persona** (utilización y valor vendido), **flujo de
+  caja** mensual y antigüedad de saldos, con exportación a Excel.
 - **Multimoneda e inflación**: moneda base configurable (**pesos argentinos por defecto**),
   cotizaciones oficiales del **BCRA** con un clic, **contratos en dólares** reexpresados al día,
   **ajuste por IPC** (mensual, trimestral o semestral) y proyección de costos con aumento previsto.

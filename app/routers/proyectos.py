@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from .. import costeo, seguimiento
 from ..database import get_db
-from ..models import (Cliente, CostoExterno, Etapa, EstadoProyecto, PlantillaEtapa, Persona,
+from ..models import (Cliente, CostoExterno, Etapa, EstadoProyecto, Factura, PlantillaEtapa, Persona,
                       Proyecto, Tarea)
 from ..schemas import (ClienteIn, ClienteOut, EtapaIn, EtapaOut, GastoIn, GastoOut,
                        PlantillaEtapaIn, PlantillaEtapaOut, ProyectoCrear, ProyectoIn, ProyectoOut,
@@ -131,6 +131,8 @@ def borrar_proyecto(pid: int, db: Session = Depends(get_db)):
     p = _get(db, Proyecto, pid, "Proyecto")
     for g in db.scalars(select(CostoExterno).where(CostoExterno.proyecto_id == pid)):
         db.delete(g)
+    for f in db.scalars(select(Factura).where(Factura.proyecto_id == pid)):
+        db.delete(f)
     for t in list(p.tareas):  # primero las tareas: pueden apuntar a ítems de presupuesto
         db.delete(t)
     db.flush()

@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rentabilidad · Presupuestos</title>
+  <link rel="stylesheet" href="assets/app.css">
+</head>
+<body>
+<main>
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap">
+    <div><h1>Rentabilidad</h1><p class="sub">Cuánto se ganó en el período por cliente, servicio y persona, y cómo vienen la facturación y los cobros.</p></div>
+    <div class="bar-tools">
+      <select id="rapido" title="Período rápido">
+        <option value="">Período…</option><option value="mes">Este mes</option><option value="mes_ant">Mes anterior</option>
+        <option value="trim">Este trimestre</option><option value="anio">Este año</option><option value="12m">Últimos 12 meses</option></select>
+      <label style="flex-direction:row;align-items:center;gap:6px">Desde <input type="date" id="desde"></label>
+      <label style="flex-direction:row;align-items:center;gap:6px">Hasta <input type="date" id="hasta"></label>
+      <button onclick="cargar()">Ver</button>
+      <button class="primary" onclick="exportar()">Exportar a Excel</button>
+    </div>
+  </div>
+  <div class="grid g4" id="kpis" style="margin-top:16px"></div>
+
+  <div class="tabs">
+    <button data-tab="clientes" class="on">Clientes y proyectos</button>
+    <button data-tab="servicios">Servicios</button>
+    <button data-tab="personas">Personas</button>
+    <button data-tab="flujo">Flujo de caja</button>
+  </div>
+
+  <section data-panel="clientes">
+    <div class="grid g2">
+      <div class="card"><h2>Ingreso devengado y costo por cliente</h2><div class="chart-box"><canvas id="g-clientes"></canvas></div></div>
+      <div class="card"><h2>Margen % por proyecto</h2><div class="chart-box"><canvas id="g-proyectos"></canvas></div></div>
+    </div>
+    <div class="card" style="margin-top:16px"><h2>Por cliente</h2>
+      <div class="tabla-scroll"><table><thead><tr><th>Cliente</th><th class="num">Proyectos</th><th class="num">Devengado</th><th class="num">Costo</th><th class="num">Margen</th>
+        <th class="num">Margen %</th><th class="num">Facturado</th><th class="num">Cobrado</th><th class="num">A cobrar</th></tr></thead><tbody id="t-clientes"></tbody></table></div></div>
+    <div class="card" style="margin-top:16px"><h2>Por proyecto</h2>
+      <div class="tabla-scroll"><table><thead><tr><th>Proyecto</th><th>Avance en el período</th><th class="num">Devengado</th><th class="num">Costo</th><th class="num">Margen</th>
+        <th class="num">Margen %</th><th class="num">Facturado</th><th class="num">Cobrado</th><th class="num">Dif. cambio</th></tr></thead><tbody id="t-proyectos"></tbody></table></div></div>
+  </section>
+
+  <section data-panel="servicios" hidden>
+    <div class="card"><h2>Horas previstas para el avance logrado vs horas reales</h2>
+      <p class="small muted" style="margin-top:-6px">Compara, para cada servicio del catálogo, las horas que se presupuestaron para lo que ya está hecho con las que realmente se usaron (proyectos con actividad en el período, horas hasta la fecha de cierre). Desvío positivo: el servicio está subpresupuestado.</p>
+      <div class="chart-box" style="height:320px"><canvas id="g-servicios"></canvas></div></div>
+    <div class="card" style="margin-top:16px">
+      <div class="tabla-scroll"><table><thead><tr><th>Servicio</th><th class="num">Tareas</th><th class="num">Horas previstas</th><th class="num">Previstas p/ avance</th>
+        <th class="num">Reales</th><th class="num">Desvío horas</th><th class="num">Costo previsto</th><th class="num">Costo real</th><th class="num">Desvío costo</th></tr></thead><tbody id="t-servicios"></tbody></table></div></div>
+  </section>
+
+  <section data-panel="personas" hidden>
+    <div class="card"><h2>Horas cargadas vs objetivo facturable</h2>
+      <p class="small muted" style="margin-top:-6px">Objetivo de empleados: horas anuales × utilización facturable, proporcional al período. Los autónomos no tienen objetivo: se muestran sus horas. El valor vendido es horas × precio por hora presupuestada de cada proyecto.</p>
+      <div class="chart-box" style="height:320px"><canvas id="g-personas"></canvas></div></div>
+    <div class="card" style="margin-top:16px">
+      <div class="tabla-scroll"><table><thead><tr><th>Persona</th><th>Rol</th><th class="num">Proyectos</th><th class="num">Horas</th><th class="num">Objetivo</th><th class="num">Cumplimiento</th>
+        <th class="num">Utilización</th><th class="num">Costo</th><th class="num">Valor vendido</th><th class="num">Margen %</th></tr></thead><tbody id="t-personas"></tbody></table></div></div>
+  </section>
+
+  <section data-panel="flujo" hidden>
+    <div class="grid g2">
+      <div class="card"><h2>Cobrado vs costos por mes</h2><div class="chart-box"><canvas id="g-flujo"></canvas></div></div>
+      <div class="card"><h2>Saldos a cobrar por antigüedad</h2><div class="chart-box"><canvas id="g-antig"></canvas></div></div>
+    </div>
+    <div class="card" style="margin-top:16px"><h2>Mes a mes</h2>
+      <p class="small muted" style="margin-top:-6px">Costos = horas cargadas al costo por hora (incluye la estructura) + gastos externos reales: es una estimación de los egresos del mes.</p>
+      <div class="tabla-scroll"><table><thead><tr><th>Mes</th><th class="num">Facturado (c/ impuestos)</th><th class="num">Cobrado</th><th class="num">Costos</th><th class="num">Neto</th>
+        <th class="num">Acumulado</th><th class="num">Dif. cambio</th></tr></thead><tbody id="t-flujo"></tbody></table></div></div>
+    <div class="card" style="margin-top:16px"><h2>Facturas a cobrar al cierre</h2>
+      <div class="tabla-scroll"><table><thead><tr><th>Número</th><th>Cliente · proyecto</th><th>Fecha</th><th>Vence</th><th class="num">Saldo</th><th class="num">Saldo <span class="mb"></span></th><th>Estado</th></tr></thead>
+        <tbody id="t-cobrar"></tbody></table></div></div>
+  </section>
+</main>
+<script src="assets/vendor/chart.umd.min.js"></script>
+<script src="assets/app.js"></script>
+<script>
+let R = null, graficos = [];
+const ESTADO_F = { pendiente: ['Pendiente', ''], parcial: ['Cobro parcial', 'emp'], vencida: ['Vencida', 'bad'] };
+const MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+const fmtMes = iso => MESES[+iso.slice(5, 7) - 1] + ' ' + iso.slice(0, 4);
+const corto = (s, n = 26) => s.length > n ? s.slice(0, n - 1) + '…' : s;
+
+document.querySelectorAll('.tabs button').forEach(b => b.onclick = () => {
+  document.querySelectorAll('.tabs button').forEach(x => x.classList.toggle('on', x === b));
+  document.querySelectorAll('[data-panel]').forEach(s => s.hidden = s.dataset.panel !== b.dataset.tab);
+});
+
+function periodo(tipo) {
+  const h = new Date(), y = h.getFullYear(), m = h.getMonth();
+  const iso = d => d.toLocaleDateString('sv-SE');
+  const r = {
+    mes: [new Date(y, m, 1), h], mes_ant: [new Date(y, m - 1, 1), new Date(y, m, 0)],
+    trim: [new Date(y, m - m % 3, 1), h], anio: [new Date(y, 0, 1), h], '12m': [new Date(y, m - 11, 1), h],
+  }[tipo];
+  if (!r) return;
+  document.getElementById('desde').value = iso(r[0]); document.getElementById('hasta').value = iso(r[1]);
+  cargar();
+}
+document.getElementById('rapido').onchange = e => { periodo(e.target.value); e.target.value = ''; };
+const qs = () => `desde=${document.getElementById('desde').value}&hasta=${document.getElementById('hasta').value}`;
+function exportar() { descargar('/api/export/rentabilidad?' + qs()); }
+
+async function cargar() {
+  try { R = await api('/rentabilidad?' + qs()); } catch (e) { return toast(e.message, true); }
+  try { localStorage.setItem('rent-periodo', JSON.stringify([document.getElementById('desde').value, document.getElementById('hasta').value])); } catch (e) { }
+  const t = R.totales, al = (CFG && CFG.margen_alerta) || 0.25;
+  const kpi = (l, v, n, cls, h) => `<div class="card kpi"><div class="label">${l}${h ? ayuda(h) : ''}</div><div class="value ${cls || ''}">${v}</div><div class="note">${n}</div></div>`;
+  document.getElementById('kpis').innerHTML = [
+    kpi('Ingreso devengado', fmtBase(t.devengado), `${fmtNum(t.horas, 0)} horas cargadas`, '',
+        'Precio vigente de cada proyecto × avance ganado en el período, se haya facturado o no.'),
+    kpi('Margen', fmtPct(t.margen_pct, 1), `${fmtBase(t.margen)} · costo ${fmtBase(t.costo)}`, claseMargen(t.margen_pct, al),
+        'Devengado − costo (horas al costo por hora con estructura + gastos externos reales).'),
+    kpi('Facturado / cobrado', fmtBase(t.facturado), `cobrado ${fmtBase(t.cobrado)}` + (t.diferencia_cambio ? ` · dif. de cambio ${fmtBase(t.diferencia_cambio)}` : ''), '',
+        'Facturado: neto sin impuestos de las facturas emitidas en el período. Cobrado: cobros del período a la cotización del día.'),
+    kpi('Saldo a cobrar', fmtBase(t.saldo_a_cobrar), t.vencido ? `<span class="v-bad">vencido ${fmtBase(t.vencido)}</span>` : 'nada vencido', t.vencido ? 'bad' : ''),
+  ].join('');
+  graficos.forEach(g => g.destroy()); graficos = [];
+  pintarClientes(al); pintarServicios(); pintarPersonas(); pintarFlujo();
+}
+
+const vacio = (n, txt = 'Sin datos en el período.') => `<tr><td colspan="${n}" class="muted">${txt}</td></tr>`;
+Chart.defaults.datasets.bar.maxBarThickness = 38;
+const opcMoneda = (horizontal) => ({ maintainAspectRatio: false, indexAxis: horizontal ? 'y' : 'x',
+  plugins: { tooltip: { callbacks: { label: c => `${c.dataset.label}: ${fmtBase(c.raw)}` } } },
+  scales: { [horizontal ? 'x' : 'y']: { ticks: { callback: v => fmtNum(v, 0) } } } });
+
+function pintarClientes(al) {
+  const cs = R.clientes;
+  document.getElementById('t-clientes').innerHTML = cs.map(c => `<tr><td><strong>${esc(c.cliente)}</strong></td><td class="num">${c.proyectos}</td>
+    <td class="num">${fmtBase(c.devengado)}</td><td class="num">${fmtBase(c.costo)}</td><td class="num">${fmtBase(c.margen)}</td>
+    <td class="num"><strong class="v-${claseMargen(c.margen_pct, al)}">${fmtPct(c.margen_pct, 1)}</strong></td>
+    <td class="num">${fmtBase(c.facturado)}</td><td class="num">${fmtBase(c.cobrado)}</td><td class="num">${fmtBase(c.saldo_a_cobrar)}</td></tr>`).join('') || vacio(9);
+  document.getElementById('t-proyectos').innerHTML = R.proyectos.map(p => `<tr><td><a href="proyecto.html?id=${p.proyecto_id}"><strong>${esc(p.proyecto)}</strong></a>
+      <div class="small muted">${esc(p.cliente)}</div></td>
+    <td style="min-width:150px">${barraAvance(p.avance_fin)}<div class="small muted">${fmtPct(p.avance_inicio)} → ${fmtPct(p.avance_fin)}</div></td>
+    <td class="num">${fmtBase(p.devengado)}</td><td class="num">${fmtBase(p.costo)}</td><td class="num">${fmtBase(p.margen)}</td>
+    <td class="num"><strong class="v-${claseMargen(p.margen_pct, al)}">${fmtPct(p.margen_pct, 1)}</strong></td>
+    <td class="num">${fmtBase(p.facturado)}</td><td class="num">${fmtBase(p.cobrado)}</td>
+    <td class="num ${p.diferencia_cambio < 0 ? 'v-bad' : ''}">${p.diferencia_cambio ? fmtBase(p.diferencia_cambio) : '—'}</td></tr>`).join('') || vacio(9);
+  graficos.push(new Chart(document.getElementById('g-clientes'), { type: 'bar',
+    data: { labels: cs.map(c => corto(c.cliente)), datasets: [
+      { label: 'Devengado', data: cs.map(c => c.devengado), backgroundColor: COLORES.acento },
+      { label: 'Costo', data: cs.map(c => c.costo), backgroundColor: COLORES.gris }] },
+    options: opcMoneda(true) }));
+  const ps = R.proyectos.filter(p => p.margen_pct != null).sort((a, b) => b.margen_pct - a.margen_pct);
+  graficos.push(new Chart(document.getElementById('g-proyectos'), { type: 'bar',
+    data: { labels: ps.map(p => corto(p.proyecto)), datasets: [{ label: 'Margen %', data: ps.map(p => p.margen_pct * 100),
+      backgroundColor: ps.map(p => p.margen_pct >= al ? COLORES.ok : p.margen_pct >= 0 ? COLORES.warn : '#c62828') }] },
+    options: { maintainAspectRatio: false, indexAxis: 'y', plugins: { legend: { display: false },
+      tooltip: { callbacks: { label: c => `Margen ${fmtNum(c.raw, 1)} % · línea de alerta ${fmtPct(al)}` } } },
+      scales: { x: { ticks: { callback: v => v + ' %' } } } } }));
+}
+
+function pintarServicios() {
+  const ss = R.servicios;
+  const dv = v => v == null ? '—' : `<span class="${v > 0.1 ? 'v-bad' : v > 0 ? 'v-warn' : 'v-ok'}">${v > 0 ? '+' : ''}${fmtPct(v, 0)}</span>`;
+  document.getElementById('t-servicios').innerHTML = ss.map(s => `<tr><td><strong>${esc(s.servicio)}</strong></td><td class="num">${s.tareas}</td>
+    <td class="num">${fmtNum(s.horas_previstas, 1)}</td><td class="num">${fmtNum(s.horas_ganadas, 1)}</td><td class="num">${fmtNum(s.horas_reales, 1)}</td>
+    <td class="num">${dv(s.desvio_horas)}</td><td class="num">${fmtBase(s.costo_previsto)}</td><td class="num">${fmtBase(s.costo_real)}</td>
+    <td class="num">${dv(s.desvio_costo)}</td></tr>`).join('') || vacio(9);
+  graficos.push(new Chart(document.getElementById('g-servicios'), { type: 'bar',
+    data: { labels: ss.map(s => corto(s.servicio, 32)), datasets: [
+      { label: 'Previstas para el avance', data: ss.map(s => s.horas_ganadas), backgroundColor: COLORES.suave },
+      { label: 'Reales', data: ss.map(s => s.horas_reales), backgroundColor: COLORES.acento }] },
+    options: { maintainAspectRatio: false, indexAxis: 'y',
+      plugins: { tooltip: { callbacks: { label: c => `${c.dataset.label}: ${fmtNum(c.raw, 1)} h` } } } } }));
+}
+
+function pintarPersonas() {
+  const ps = R.personas;
+  document.getElementById('t-personas').innerHTML = ps.map(p => `<tr><td><strong>${esc(p.persona)}</strong><div class="small muted">${p.tipo === 'empleado' ? 'Empleado' : 'Autónomo'}</div></td>
+    <td>${esc(p.rol)}</td><td class="num">${p.proyectos}</td><td class="num">${fmtNum(p.horas, 1)}</td><td class="num">${fmtNum(p.horas_objetivo, 0)}</td>
+    <td class="num"><span class="v-${claseIndice(p.cumplimiento_objetivo)}">${fmtPct(p.cumplimiento_objetivo)}</span></td>
+    <td class="num">${fmtPct(p.utilizacion)}</td><td class="num">${fmtBase(p.costo)}</td><td class="num">${fmtBase(p.valor)}</td>
+    <td class="num">${fmtPct(p.margen_pct, 1)}</td></tr>`).join('') || vacio(10, 'No hay horas cargadas en el período.');
+  graficos.push(new Chart(document.getElementById('g-personas'), { type: 'bar',
+    data: { labels: ps.map(p => p.persona), datasets: [
+      { label: 'Horas cargadas', data: ps.map(p => p.horas), backgroundColor: COLORES.acento },
+      { label: 'Objetivo facturable', data: ps.map(p => p.horas_objetivo), backgroundColor: COLORES.gris }] },
+    options: { maintainAspectRatio: false, plugins: { tooltip: { callbacks: { label: c => `${c.dataset.label}: ${fmtNum(c.raw, 1)} h` } } } } }));
+}
+
+function pintarFlujo() {
+  const fs = R.flujo;
+  document.getElementById('t-flujo').innerHTML = fs.map(m => `<tr><td>${fmtMes(m.mes)}</td><td class="num">${fmtBase(m.facturado)}</td>
+    <td class="num">${fmtBase(m.cobrado)}</td><td class="num">${fmtBase(m.costos)}</td>
+    <td class="num ${m.neto < 0 ? 'v-bad' : 'v-ok'}">${fmtBase(m.neto)}</td><td class="num">${fmtBase(m.acumulado)}</td>
+    <td class="num">${m.diferencia_cambio ? fmtBase(m.diferencia_cambio) : '—'}</td></tr>`).join('') || vacio(7);
+  document.getElementById('t-cobrar').innerHTML = R.a_cobrar.map(x => {
+    const [txt, cls] = ESTADO_F[x.estado] || [x.estado, ''];
+    return `<tr><td>${esc(x.numero || 's/n')}</td><td>${esc(x.cliente)} · <span class="muted">${esc(x.proyecto)}</span></td><td>${fmtFecha(x.fecha)}</td>
+      <td>${fmtFecha(x.vencimiento)}${x.dias_vencida ? ` <span class="small v-bad">(${x.dias_vencida} días)</span>` : ''}</td>
+      <td class="num">${fmtBase(x.saldo, x.moneda)}</td><td class="num">${fmtBase(x.saldo_base)}</td><td><span class="tag ${cls}">${txt}</span></td></tr>`;
+  }).join('') || vacio(7, 'No hay saldos pendientes.');
+  graficos.push(new Chart(document.getElementById('g-flujo'), {
+    data: { labels: fs.map(m => fmtMes(m.mes)), datasets: [
+      { type: 'bar', label: 'Cobrado', data: fs.map(m => m.cobrado), backgroundColor: COLORES.acento, order: 2 },
+      { type: 'bar', label: 'Costos', data: fs.map(m => m.costos), backgroundColor: COLORES.gris, order: 2 },
+      { type: 'line', label: 'Neto acumulado', data: fs.map(m => m.acumulado), borderColor: COLORES.ok, backgroundColor: COLORES.ok, tension: .2, order: 1 }] },
+    options: opcMoneda(false) }));
+  const an = R.antiguedad;
+  graficos.push(new Chart(document.getElementById('g-antig'), { type: 'bar',
+    data: { labels: an.map(a => a.tramo), datasets: [{ label: 'Saldo', data: an.map(a => a.saldo_base),
+      backgroundColor: [COLORES.suave, COLORES.warn, '#d9822b', '#c62828'] }] },
+    options: { ...opcMoneda(false), plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => fmtBase(c.raw) } } } } }));
+}
+
+(async () => {
+  await CFG_LISTA;
+  let p = null;
+  try { p = JSON.parse(localStorage.getItem('rent-periodo')); } catch (e) { }
+  if (p && p[0] && p[1]) { document.getElementById('desde').value = p[0]; document.getElementById('hasta').value = p[1]; cargar(); }
+  else periodo('anio');
+})();
+</script>
+</body>
+</html>

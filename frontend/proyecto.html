@@ -24,6 +24,7 @@
     <button data-tab="presupuesto">Presupuesto</button>
     <button data-tab="tareas">Etapas y tareas</button>
     <button data-tab="horas">Horas y gastos</button>
+    <button data-tab="facturacion">Facturación</button>
   </div>
 
   <section data-panel="resumen">
@@ -96,8 +97,19 @@
       </div>
     </div>
   </section>
-</main>
 
+  <section data-panel="facturacion" hidden>
+    <div class="grid g4" id="fact-kpis"></div>
+    <div class="card" style="margin-top:16px">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+        <h2 style="margin:0">Facturas y cobros</h2><button class="primary" onclick="abrirFactura()">+ Factura</button></div>
+      <p class="small muted">Registrá cada factura con su número, el hito o etapa que cobra y el vencimiento; después cargá los cobros.
+        En facturas en otra moneda, cada cobro guarda la cotización del día y se calcula la diferencia de cambio.</p>
+      <div class="tabla-scroll"><table><thead><tr><th>Número</th><th>Fecha</th><th>Vence</th><th class="num">Importe</th>
+        <th class="num">Cobrado</th><th class="num">Saldo</th><th>Estado</th><th></th></tr></thead><tbody id="tabla-facturas"></tbody></table></div>
+    </div>
+  </section>
+</main>
 
 
 <dialog id="dlg-proyecto">
@@ -167,6 +179,7 @@
 <script src="assets/vendor/chart.umd.min.js"></script>
 <script src="assets/app.js"></script>
 <script src="assets/presupuesto.js"></script>
+<script src="assets/facturacion.js"></script>
 <script>
 const PID = Number(new URLSearchParams(location.search).get('id'));
 let P, S, tareas = [], personas = [], graficos = [], etapaEdit = null, tareaEdit = null;
@@ -459,8 +472,9 @@ async function borrarGasto(id) { if (confirm('¿Borrar el gasto?')) { await api(
 window.addEventListener('resize', () => { clearTimeout(window._rz); window._rz = setTimeout(pintarGantt, 200); });
 function irATab(t) { const b = document.querySelector(`.tabs button[data-tab=${t}]`); if (b) b.click(); }
 cargar().then(() => {
-  cargarPresupuestos();
-  if (P.estado === 'en_presupuesto' || location.hash === '#presupuesto') irATab('presupuesto');
+  cargarPresupuestos(); cargarFacturacion();
+  if (location.hash === '#facturacion') irATab('facturacion');
+  else if (P.estado === 'en_presupuesto' || location.hash === '#presupuesto') irATab('presupuesto');
 });
 </script>
 </body>

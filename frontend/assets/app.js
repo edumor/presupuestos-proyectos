@@ -5,6 +5,7 @@ const PAGINAS = [
   ['index.html', 'Inicio'],
   ['proyectos.html', 'Proyectos'],
   ['horas.html', 'Horas'],
+  ['rentabilidad.html', 'Rentabilidad'],
   ['equipo.html', 'Equipo'],
   ['estructura.html', 'Estructura'],
   ['servicios.html', 'Servicios'],

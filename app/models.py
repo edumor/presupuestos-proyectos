@@ -316,6 +316,41 @@ class HoraReal(Timestamps, Base):
     tarea: Mapped[Tarea] = relationship(back_populates="horas")
 
 
+class Factura(Timestamps, Base):
+    """Registro interno de una factura emitida (el comprobante fiscal se emite por fuera)."""
+    __tablename__ = "facturas"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    proyecto_id: Mapped[int] = mapped_column(ForeignKey("proyectos.id"), index=True)
+    etapa_id: Mapped[int | None] = mapped_column(ForeignKey("etapas.id", ondelete="SET NULL"))
+    numero: Mapped[str | None] = mapped_column(String(40))
+    concepto: Mapped[str | None] = mapped_column(String(200))
+    fecha: Mapped[date] = mapped_column(Date, index=True)
+    vencimiento: Mapped[date | None] = mapped_column(Date)
+    moneda: Mapped[str] = mapped_column(String(3))
+    importe_neto: Mapped[float] = mapped_column(Dinero)       # en `moneda`, sin impuestos
+    impuesto: Mapped[float] = mapped_column(Dinero, default=0)  # en `moneda`
+    cotizacion: Mapped[float] = mapped_column(Tasa, default=1)  # moneda base por unidad, a la fecha
+    neto_base: Mapped[float] = mapped_column(Dinero)
+    anulada: Mapped[bool] = mapped_column(Boolean, default=False)
+    notas: Mapped[str | None] = mapped_column(Text)
+    es_ejemplo: Mapped[bool] = mapped_column(Boolean, default=False)
+    proyecto: Mapped[Proyecto] = relationship()
+    cobros: Mapped[list["Cobro"]] = relationship(back_populates="factura", cascade="all, delete-orphan",
+                                                 order_by="Cobro.fecha")
+
+
+class Cobro(Base):
+    __tablename__ = "cobros"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    factura_id: Mapped[int] = mapped_column(ForeignKey("facturas.id", ondelete="CASCADE"), index=True)
+    fecha: Mapped[date] = mapped_column(Date, index=True)
+    importe: Mapped[float] = mapped_column(Dinero)             # en la moneda de la factura (total con impuestos)
+    cotizacion: Mapped[float] = mapped_column(Tasa, default=1)  # moneda base por unidad, a la fecha del cobro
+    importe_base: Mapped[float] = mapped_column(Dinero)
+    notas: Mapped[str | None] = mapped_column(Text)
+    factura: Mapped[Factura] = relationship(back_populates="cobros")
+
+
 class IndiceIPC(Base):
     """Variación mensual del IPC (INDEC), en %: 1,9 = 1,9 % en ese mes."""
     __tablename__ = "indices_ipc"

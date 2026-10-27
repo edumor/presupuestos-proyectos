@@ -395,3 +395,74 @@ class IPCOut(ORM):
     mes: date
     variacion: float
     fuente: str | None = None
+
+
+# --- Facturación (registro interno) ---
+class FacturaIn(BaseModel):
+    etapa_id: int | None = None
+    numero: str | None = Field(default=None, max_length=40)
+    concepto: str | None = Field(default=None, max_length=200)
+    fecha: date
+    vencimiento: date | None = None
+    moneda: str | None = None          # None = moneda del contrato del proyecto
+    importe_neto: float = Field(gt=0)
+    impuesto: float = Field(default=0, ge=0)
+    cotizacion: float | None = Field(default=None, gt=0)  # None = la vigente a la fecha
+    anulada: bool = False
+    notas: str | None = None
+
+    @model_validator(mode="after")
+    def _validar(self):
+        if self.moneda:
+            self.moneda = self.moneda.upper()
+            if self.moneda not in MONEDAS:
+                raise ValueError(ERROR_MONEDA)
+        if self.vencimiento and self.vencimiento < self.fecha:
+            raise ValueError("El vencimiento no puede ser anterior a la fecha de la factura")
+        return self
+
+
+class CobroIn(BaseModel):
+    fecha: date
+    importe: float = Field(gt=0)        # en la moneda de la factura
+    cotizacion: float | None = Field(default=None, gt=0)
+    notas: str | None = None
+
+
+class CobroOut(ORM):
+    id: int
+    factura_id: int
+    fecha: date
+    importe: float
+    cotizacion: float
+    importe_base: float
+    notas: str | None
+    diferencia_cambio: float = 0
+
+
+class FacturaOut(ORM):
+    id: int
+    proyecto_id: int
+    etapa_id: int | None
+    etapa_nombre: str | None = None
+    proyecto_nombre: str | None = None
+    cliente_nombre: str | None = None
+    numero: str | None
+    concepto: str | None
+    fecha: date
+    vencimiento: date | None
+    moneda: str
+    importe_neto: float
+    impuesto: float
+    total: float = 0
+    cotizacion: float
+    neto_base: float
+    anulada: bool
+    notas: str | None
+    cobrado: float = 0
+    saldo: float = 0
+    saldo_base: float = 0
+    diferencia_cambio: float = 0
+    estado: str = "pendiente"
+    dias_vencida: int | None = None
+    cobros: list[CobroOut] = []

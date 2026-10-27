@@ -4,17 +4,18 @@ Este manual explica cómo instalar el programa, cargar los datos de tu empresa y
 
 ## 1. Qué hace el programa
 
-El programa responde tres preguntas sobre cada proyecto:
+El programa responde cuatro preguntas sobre cada proyecto:
 
 - **¿Cuánto nos cuesta cada hora de trabajo?** Suma lo que cobra cada persona (sueldo o tarifa) más una parte de los gastos fijos de la empresa.
 - **¿Vamos en tiempo?** Compara lo que debería estar hecho a hoy con lo que realmente está hecho.
 - **¿Vamos a ganar lo que esperábamos?** Compara lo gastado con lo que vale el trabajo hecho y proyecta el margen final.
+- **¿Cuánto ganamos en el mes, con qué clientes y servicios, y cuánto nos deben?** Registra facturas y cobros y muestra la rentabilidad de cualquier período.
 
 Todo funciona en tu computadora, sin internet. Los importes se calculan en una **moneda base** que se elige al empezar: por defecto, **pesos argentinos (ARS)**. Los sueldos, tarifas o gastos en otra moneda (dólares, euros, reales…) se convierten con las cotizaciones que cargás, y las propuestas pueden mostrar también el **equivalente en dólares (USD)**.
 
 ## 2. Instalación
 
-1. Abrí el instalador **Presupuestos-Setup-0.6.0.exe** (el número cambia con cada versión).
+1. Abrí el instalador **Presupuestos-Setup-0.7.0.exe** (el número cambia con cada versión).
 2. Windows puede mostrar el aviso **"Windows protegió su PC"**, porque el programa no tiene firma digital comercial. Hacé clic en **Más información** y después en **Ejecutar de todos modos**. Es un aviso normal para programas sin firma comercial.
 3. Seguí el asistente: **Siguiente → Instalar → Finalizar**. No pide contraseña de administrador.
 4. Al terminar queda un acceso directo **Presupuestos** en el escritorio y en el menú Inicio. En el menú Inicio también encontrás este manual y la carpeta de datos.
@@ -42,6 +43,7 @@ El menú superior tiene estas secciones:
 | **Inicio** | Resumen: proyectos en curso, costo por hora y cotizaciones | Cada vez que abrís |
 | **Proyectos** | Cartera de proyectos y acceso a cada uno | Varias veces por semana |
 | **Horas** | Planilla semanal para cargar las horas de cada persona | Una vez por semana (o a diario) |
+| **Rentabilidad** | Margen del período por cliente, proyecto, servicio y persona; facturación, cobros y flujo de caja | Una vez por mes |
 | **Equipo** | Personas, su costo por hora y la carga de trabajo semanal | Al sumar o cambiar personas |
 | **Estructura** | Gastos fijos de la empresa | Cuando cambia un gasto fijo |
 | **Servicios** | Catálogo de lo que vendés, para armar presupuestos | Al empezar y cuando sumás un servicio |
@@ -266,7 +268,26 @@ En el cronograma el rombo del hito se pinta de verde y la tarjeta muestra "Aprob
 
 ![Editar etapa](assets/manual/13_dlg_etapa.png)
 
-### 7.5 Rutina recomendada
+### 7.5 Facturar y registrar cobros
+
+La pestaña **Facturación** de cada proyecto es un **registro interno**: la factura legal se sigue emitiendo en ARCA (AFIP) o en tu sistema de facturación, y acá se anota para saber cuánto se facturó, cuánto falta facturar, cuánto se cobró y qué está vencido.
+
+1. Tocá **+ Factura** y completá el **número** del comprobante, la **etapa o hito** que factura (por ejemplo, el anticipo en *Inicio*), el **concepto**, la **fecha**, el **vencimiento**, el **importe neto** y los **impuestos** (IVA u otros). El importe neto se propone con lo que falta facturar.
+2. La **moneda** es, por defecto, la del contrato. En una factura en dólares se guarda la **cotización del día de la factura** (podés escribir otra, por ejemplo la del comprobante).
+3. Cuando el cliente paga, tocá **Cobrar** en la fila de la factura, indicá la fecha y el importe (puede ser un pago parcial). En facturas en otra moneda, cada cobro guarda la cotización de su día.
+4. Si una factura se anula con una nota de crédito, abrila y tildá **Anulada**: deja de sumar sin perder el registro.
+
+Arriba se ve lo **facturado** (y qué % del precio representa), lo **que falta facturar**, lo **cobrado** y el **saldo a cobrar**, con lo **vencido** en rojo.
+
+![Facturación del proyecto](assets/manual/22_facturacion.png)
+
+**Diferencia de cambio.** Si facturaste USD 525 cuando el dólar estaba a 1.435 y el cliente pagó cuando estaba a 1.540, en pesos cobraste ARS 55.125 más de lo facturado. Esa diferencia se muestra en cada cobro (verde si es ganancia, roja si es pérdida) y se suma en el tablero de rentabilidad.
+
+![Factura en dólares con diferencia de cambio](assets/manual/24_fact_usd.png)
+
+![Registrar un cobro](assets/manual/23_dlg_cobro.png)
+
+### 7.6 Rutina recomendada
 
 | Cuándo | Qué hacer | Dónde |
 | --- | --- | --- |
@@ -274,6 +295,8 @@ En el cronograma el rombo del hito se pinta de verde y la tarjeta muestra "Aprob
 | Cada viernes | Cargar las horas de la semana de cada persona | Horas |
 | Cada viernes | Actualizar el % de avance de las tareas en curso | Proyecto → Etapas y tareas |
 | Al pagar una compra | Cargar el gasto real | Proyecto → Horas y gastos |
+| Al emitir una factura o recibir un pago | Registrar la factura o el cobro | Proyecto → Facturación |
+| Cada fin de mes | Revisar el margen del mes, los cobros y lo vencido | Rentabilidad |
 | Al terminar una etapa | Fechas reales, hito cumplido, aprobación del cliente | Proyecto → tarjeta de la etapa |
 | Cada semana | Mirar la cartera: semáforos, margen proyectado, próximos hitos | Proyectos |
 | Al cerrar un proyecto | Cambiar el estado a Terminado y exportar el Excel | Proyecto → Editar |
@@ -337,6 +360,33 @@ En **Equipo**, el gráfico **Carga semanal** muestra, por semana, las horas real
 
 ![Carga del equipo](assets/manual/18_carga_equipo.png)
 
+### 8.6 Rentabilidad del período
+
+La pantalla **Rentabilidad** responde cuánto se ganó en un período y dónde. Elegí **Desde** y **Hasta** (o un período rápido: este mes, mes anterior, trimestre, año, últimos 12 meses) y tocá **Ver**. **Exportar a Excel** baja todo, con una hoja por tablero y gráficos.
+
+Arriba, cuatro indicadores del período:
+
+- **Ingreso devengado**: lo que se ganó trabajando, se haya facturado o no. Es el precio vigente de cada proyecto multiplicado por el avance logrado en el período (por ejemplo, si un proyecto de $8.000.000 pasó de 20 % a 50 %, devengó $2.400.000).
+- **Margen**: ingreso devengado menos el costo del período (horas cargadas al costo por hora, que incluye la estructura, más los gastos externos reales). En verde, naranja o rojo según el margen de alerta de Configuración.
+- **Facturado / cobrado**: neto de las facturas emitidas en el período y lo cobrado, con la diferencia de cambio.
+- **Saldo a cobrar** al cierre del período, con lo vencido.
+
+**Clientes y proyectos.** Devengado y costo de cada cliente, margen % de cada proyecto y las tablas con facturado, cobrado y saldo. Sirve para ver qué clientes dejan más margen y cuáles consumen más horas de las que pagan.
+
+![Rentabilidad por cliente y proyecto](assets/manual/25_rentabilidad.png)
+
+**Servicios.** Para cada servicio del catálogo compara las **horas previstas para el avance logrado** con las **horas reales**. Un desvío de +30 % significa que ese servicio lleva 30 % más horas de las presupuestadas: conviene subirle las horas en el catálogo o revisar el precio. Las tareas cargadas a mano, sin servicio, se agrupan aparte.
+
+![Rentabilidad por servicio](assets/manual/26_rent_servicios.png)
+
+**Personas.** Horas cargadas en el período por cada persona, contra su **objetivo facturable** (empleados: horas anuales × utilización, proporcional al período; los autónomos no tienen objetivo), su costo y el **valor vendido** de esas horas (horas × precio por hora presupuestada de cada proyecto).
+
+![Rentabilidad por persona](assets/manual/27_rent_personas.png)
+
+**Flujo de caja.** Mes a mes: facturado (con impuestos), cobrado, costos del mes (estimación de los egresos), neto y acumulado. A la derecha, los **saldos a cobrar por antigüedad** (por vencer, 1 a 30, 31 a 60 y más de 60 días) y abajo la lista de facturas pendientes.
+
+![Flujo de caja](assets/manual/28_rent_flujo.png)
+
 ## 9. Exportar documentos y dashboards
 
 El botón azul **Exportar** está en cada fila de **Proyectos** y de **Inicio**, y dentro de cada proyecto (**Exportar (PDF · Excel · HTML)**). Ofrece cinco opciones. Desde dentro del proyecto usan la fecha elegida en **Ver al**; desde Proyectos e Inicio, la fecha de hoy.
@@ -366,6 +416,8 @@ En el diálogo elegí el **Idioma**: **Español** (por defecto) o **English**. S
 | **Excel completo** | Resumen, etapas, tareas, horas, gastos, curva S y costo por persona, con gráficos |
 | **Dashboard interactivo** | CPI, SPI, margen proyectado, curva S en la moneda base, costo por persona y tabla de tareas con costos (siempre en español) |
 
+En **Rentabilidad**, **Exportar a Excel** baja el período elegido: resumen, proyectos, clientes, servicios, personas, flujo de caja y facturas a cobrar.
+
 Además, en **Proyectos** están **Excel cartera** (todos los proyectos con sus indicadores) y **Excel base completa** (todas las tablas, una por hoja).
 
 ### 9.3 Los dashboards en HTML
@@ -385,7 +437,7 @@ Los archivos se descargan en la carpeta **Descargas** con el nombre del proyecto
 
 ## 11. Actualizaciones
 
-Cuando recibas una versión nueva (por ejemplo **Presupuestos-Setup-0.6.0.exe**), cerrá el programa y ejecutá el instalador nuevo: reemplaza el programa y conserva todos los datos. La base se adapta sola a la versión nueva la primera vez que la abrís.
+Cuando recibas una versión nueva (por ejemplo **Presupuestos-Setup-0.7.0.exe**), cerrá el programa y ejecutá el instalador nuevo: reemplaza el programa y conserva todos los datos. La base se adapta sola a la versión nueva la primera vez que la abrís.
 
 Si venías usando una versión anterior en dólares, se conservan todos los importes y la moneda base sigue siendo **USD**. El logo que traía esa versión ya no viene incluido: si querés verlo en la barra, cargalo en **Configuración → Datos de la empresa**.
 
@@ -427,6 +479,9 @@ Si venías usando una versión anterior en dólares, se conservan todos los impo
 | Hito | Entregable que marca el cierre de una etapa |
 | Moneda del contrato | Moneda en la que se acordó el precio con el cliente (por ejemplo, USD); en pesos se reexpresa con la cotización de cada día |
 | IPC | Índice de precios al consumidor del INDEC; su variación mensual ajusta los contratos en pesos con cláusula de ajuste |
+| Ingreso devengado | Precio del proyecto × avance logrado en un período: lo ganado trabajando, se haya facturado o no |
+| Diferencia de cambio | En facturas en otra moneda: lo cobrado a la cotización del día del cobro menos lo mismo a la cotización de la factura |
+| Valor vendido por hora | Precio del proyecto ÷ horas presupuestadas |
 | Versión del presupuesto | Cada propuesta de precio y alcance enviada al cliente; la aprobada congela costos y genera las tareas |
 
 <a id="licencia"></a>

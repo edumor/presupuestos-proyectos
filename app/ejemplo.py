@@ -15,8 +15,8 @@ from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
 from . import costeo, seguimiento
-from .models import (Cliente, CostoExterno, CostoFijo, Cotizacion, EstadoProyecto, HoraReal,
-                     Periodicidad, Persona, Proyecto, Rol, Servicio, Tarea, TipoPersona)
+from .models import (Cliente, Cobro, CostoExterno, CostoFijo, Cotizacion, EstadoPresupuesto, EstadoProyecto, Factura,
+                     HoraReal, Periodicidad, Presupuesto, PresupuestoItem, Persona, Proyecto, Rol, Servicio, Tarea, TipoPersona)
 
 MONEDA = "ARS"
 
@@ -161,6 +161,20 @@ TAREAS_AUDITORIA = [
 ]
 
 
+# servicio del catálogo de cada tarea (para el tablero de rentabilidad por servicio)
+TAREA_SERVICIO = {
+    "Kick-off y brief": "Reunión de kick-off y brief", "Relevamiento": "Reunión de kick-off y brief",
+    "Estrategia y calendario": "Estrategia y planificación de campaña",
+    "Auditoría SEO inicial": "Auditoría SEO", "Plan de auditoría": "Auditoría SEO",
+    "Auditoría técnica y de contenidos": "Auditoría SEO",
+    "Diseño de piezas gráficas": "Diseño de piezas gráficas (paquete de 10)", "Landing page": "Landing page",
+    "Campañas de pago": "Gestión de campañas de pago (setup)",
+    "Gestión de redes sociales": "Gestión de redes sociales (mes)",
+    "Reporte final y presentación": "Reportes y analítica (mes)", "Informe y recomendaciones": "Reportes y analítica (mes)",
+    "Gestión y reuniones de cierre": "Reuniones y gestión del proyecto",
+}
+
+
 def _proyectos_ejemplo(db: Session, cliente: Cliente) -> None:
     hoy = date.today()
     personas = {p.nombre: p for p in db.scalars(select(Persona).where(Persona.es_ejemplo))}
@@ -179,11 +193,20 @@ def _proyectos_ejemplo(db: Session, cliente: Cliente) -> None:
         p.etapas = seguimiento.etapas_desde_plantilla(db, p)
         db.flush()
         etapas = {e.nombre: e for e in p.etapas}
+        servicios = {x.nombre: x for x in db.scalars(select(Servicio).where(Servicio.es_ejemplo))}
+        pres = Presupuesto(proyecto_id=p.id, version=1, estado=EstadoPresupuesto.aprobado, margen=0.35,
+                           fecha_envio=inicio - timedelta(days=10), fecha_aprobacion=inicio - timedelta(days=3))
+        db.add(pres)
         costo_tareas = 0.0
         for i, (etapa, tnombre, quien, horas, ini, dur, f_horas, f_avance) in enumerate(tareas):
             per = personas[quien]
             costo = round(costeo.costo_hora(db, per, inicio)["costo_total_base"], 2)
-            t = Tarea(proyecto_id=p.id, etapa_id=etapas[etapa].id, nombre=tnombre, persona_id=per.id,
+            srv = servicios.get(TAREA_SERVICIO.get(tnombre, ""))
+            item = PresupuestoItem(servicio_id=srv.id if srv else None, tarea=tnombre, etapa=etapa, rol_id=per.rol_id,
+                                   persona_id=per.id, horas=horas, costo_hora_base=costo, orden=i)
+            pres.items.append(item)
+            db.flush()
+            t = Tarea(proyecto_id=p.id, etapa_id=etapas[etapa].id, item_id=item.id, nombre=tnombre, persona_id=per.id,
                       fecha_inicio=inicio + timedelta(days=ini), fecha_fin=inicio + timedelta(days=ini + dur - 1),
                       horas_previstas=horas, costo_hora_base=costo, costo_previsto_base=round(costo * horas, 2), orden=i)
             db.add(t)
@@ -207,11 +230,39 @@ def _proyectos_ejemplo(db: Session, cliente: Cliente) -> None:
                     externos += importe * fx
         # precio acordado: costo previsto con 35 % de margen, redondeado a $10.000
         p.precio_base = round((costo_tareas + externos) / (1 - p.margen), -4)
+        pres.costo_base, pres.precio_base = round(costo_tareas + externos, 2), p.precio_base
         if nombre == "Auditoría SEO":  # contrato en dólares: el precio queda fijo en USD
             usd = COTIZACIONES["USD"][0]
             p.moneda_contrato, p.precio_contrato = "USD", round(p.precio_base / usd, -1)
+            pres.moneda_contrato = "USD"
             p.precio_base = p.precio_contrato * usd
+        _facturas_ejemplo(db, p, inicio, hoy, etapas)
     db.commit()
+
+
+def _facturas_ejemplo(db: Session, p: Proyecto, inicio: date, hoy: date, etapas: dict) -> None:
+    """Anticipo cobrado y una factura por hito; en el contrato en dólares, cobro con otra cotización."""
+    def factura(numero, fecha, vence, pct, etapa, concepto, cobros):
+        moneda = p.moneda_contrato or "ARS"
+        precio = float(p.precio_contrato if p.moneda_contrato else p.precio_base)
+        neto = round(precio * pct, 2)
+        iva = 0 if p.moneda_contrato else round(neto * 0.21, 2)  # exportación de servicios: sin IVA
+        fx = costeo.base_por_unidad(db, moneda, fecha)
+        f = Factura(proyecto_id=p.id, etapa_id=etapas[etapa].id, numero=numero, concepto=concepto, fecha=fecha,
+                    vencimiento=vence, moneda=moneda, importe_neto=neto, impuesto=iva, cotizacion=fx,
+                    neto_base=round(neto * fx, 2), es_ejemplo=True)
+        for fecha_c, parte in cobros:
+            fxc = costeo.base_por_unidad(db, moneda, fecha_c)
+            imp = round((neto + iva) * parte, 2)
+            f.cobros.append(Cobro(fecha=fecha_c, importe=imp, cotizacion=fxc, importe_base=round(imp * fxc, 2)))
+        db.add(f)
+    if p.moneda_contrato:
+        factura("E-0001-00000031", inicio, inicio + timedelta(days=30), 0.5, "Inicio", "Anticipo 50 %", [(hoy, 1.0)])
+    else:
+        factura("A-0001-00000148", inicio, inicio + timedelta(days=10), 0.4, "Inicio", "Anticipo 40 %",
+                [(inicio + timedelta(days=8), 1.0)])
+        factura("A-0001-00000163", inicio + timedelta(days=28), inicio + timedelta(days=38), 0.3, "Planificación",
+                "Aprobación de la planificación 30 %", [(inicio + timedelta(days=36), 0.5)])
 
 
 def _simular_avance(db: Session, t: Tarea, per: Persona, f_horas: float, f_avance: float, hoy: date) -> None:
@@ -242,6 +293,12 @@ def borrar(db: Session) -> None:
     """Borra solo lo marcado como ejemplo; roles y cotizaciones quedan."""
     for p in db.scalars(select(Proyecto).where(Proyecto.es_ejemplo)).all():
         db.execute(delete(CostoExterno).where(CostoExterno.proyecto_id == p.id))
+        for f in db.scalars(select(Factura).where(Factura.proyecto_id == p.id)).all():
+            db.delete(f)
+        for t in list(p.tareas):  # primero las tareas: apuntan a ítems del presupuesto
+            db.delete(t)
+        db.flush()
+        db.expire(p, ["tareas"])
         db.delete(p)
     db.flush()
     for modelo in (Servicio, Persona, CostoFijo, Cliente):

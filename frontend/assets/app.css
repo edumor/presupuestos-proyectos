@@ -105,3 +105,12 @@ tr.sel td { background: var(--accent-soft); }
 .pres-items select { max-width: 170px; }
 footer.credito a { color: inherit; }
 [hidden] { display: none !important; }
+/* tablas anchas: desplazamiento horizontal dentro de la tarjeta */
+.tabla-scroll { overflow-x: auto; }
+.tabla-scroll td:first-child { min-width: 150px; }
+td.nowrap { white-space: nowrap; }
+.link.nowrap, button.nowrap { white-space: nowrap; }
+dialog .fields > * { min-width: 0; } dialog .fields select, dialog .fields input { width: 100%; max-width: 100%; box-sizing: border-box; }
+tr.sub td { border-top: none; padding-top: 0; }
+tr.con-sub td { border-bottom: none; }
+dialog .fields input[type=checkbox] { width: auto; }
