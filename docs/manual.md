@@ -15,7 +15,7 @@ Todo funciona en tu computadora, sin internet. Los importes se calculan en una *
 
 ## 2. Instalación
 
-1. Abrí el instalador **Presupuestos-Setup-0.8.0.exe** (el número cambia con cada versión).
+1. Abrí el instalador **Presupuestos-Setup-0.8.1.exe** (el número cambia con cada versión).
 2. Windows puede mostrar el aviso **"Windows protegió su PC"**, porque el programa no tiene firma digital comercial. Hacé clic en **Más información** y después en **Ejecutar de todos modos**. Es un aviso normal para programas sin firma comercial.
 3. Seguí el asistente: **Siguiente → Instalar → Finalizar**. No pide contraseña de administrador.
 4. Al terminar queda un acceso directo **Presupuestos** en el escritorio y en el menú Inicio. En el menú Inicio también encontrás este manual y la carpeta de datos.
@@ -468,7 +468,7 @@ Al abrir el programa, si hay internet, se consulta si hay una versión nueva pub
 
 ![Aviso de versión nueva](assets/manual/32_aviso_version.png)
 
-Cuando recibas una versión nueva (por ejemplo **Presupuestos-Setup-0.8.0.exe**), cerrá el programa y ejecutá el instalador nuevo: reemplaza el programa y conserva todos los datos. La base se adapta sola a la versión nueva la primera vez que la abrís.
+Cuando recibas una versión nueva (por ejemplo **Presupuestos-Setup-0.8.1.exe**), cerrá el programa y ejecutá el instalador nuevo: reemplaza el programa y conserva todos los datos. La base se adapta sola a la versión nueva la primera vez que la abrís.
 
 Si venías usando una versión anterior en dólares, se conservan todos los importes y la moneda base sigue siendo **USD**. El logo que traía esa versión ya no viene incluido: si querés verlo en la barra, cargalo en **Configuración → Datos de la empresa**.
 
@@ -476,6 +476,7 @@ Si venías usando una versión anterior en dólares, se conservan todos los impo
 
 | Qué pasa | Qué hacer |
 | --- | --- |
+| **Traer del BCRA** o **Actualizar desde el BCRA** dice «No se pudo conectar con el BCRA» | Abrí en el navegador https://api.bcra.gob.ar/estadisticascambiarias/v1.0/Cotizaciones. Si ves datos, internet funciona: el programa reintenta solo con el sistema de red de Windows (útil con proxies de empresa); si aun así falla, el mensaje dice el motivo. Si el navegador tampoco abre, el servicio del BCRA está caído o la red lo bloquea: cargá la cotización a mano y probá más tarde |
 | Windows dice "Windows protegió su PC" | **Más información → Ejecutar de todos modos** (sección 2) |
 | El navegador dice "No se puede acceder a este sitio" | El programa está cerrado: abrilo con el acceso directo. Si la ventana negra está abierta, esperá unos segundos y recargá |
 | "No hay cotización cargada para USD" | Cargá la cotización en **Cotizaciones** o tocá **Traer del BCRA** |
