@@ -1,14 +1,13 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Compila el instalador de Windows desde el código fuente y lo publica en el Release.
 # Se dispara al subir una etiqueta vX.Y.Z (git tag v0.5.0 && git push origin v0.5.0) o al subir a main
-# un cambio de versión en app/__init__.py: si la etiqueta de esa versión no existe, la crea y publica.
+# main con una versión nueva en app/__init__.py: si la etiqueta de esa versión no existe, la crea y publica.
 name: Release
 
 on:
   push:
     tags: ["v*"]
     branches: [main]
-    paths: ["app/__init__.py"]
   workflow_dispatch:
 
 permissions:
