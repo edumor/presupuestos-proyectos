@@ -104,3 +104,4 @@ tr.sel td { background: var(--accent-soft); }
 .pres-items td { vertical-align: middle; padding: 6px 6px; }
 .pres-items select { max-width: 170px; }
 footer.credito a { color: inherit; }
+[hidden] { display: none !important; }

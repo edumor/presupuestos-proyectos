@@ -227,7 +227,9 @@ def propuesta(d: dict) -> bytes:
     h.append(_tabla(filas, anchos, num_cols=tuple(range(1, len(cab))), total=True))
     notas = [t["nota_reparto"]]
     if fx:
-        notas.append(t["nota_fx"].format(m=fx["moneda"], v=n(fx["valor"], 4), b=mb, f=f(fx["fecha"])))
+        notas.append(i18n.nota_fx(fx, mb, t, d["idioma"]))
+    if d.get("nota_ajuste"):
+        notas.append(d["nota_ajuste"])
     h.append(Spacer(1, 2 * mm))
     h += [Paragraph(x, E["chico"]) for x in notas]
     if d["condiciones"]:

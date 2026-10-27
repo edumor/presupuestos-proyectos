@@ -77,6 +77,8 @@ class Configuracion(Base):
     empresa_web: Mapped[str | None] = mapped_column(String(160))
     empresa_id_fiscal: Mapped[str | None] = mapped_column(String(60))
     validez_dias: Mapped[int] = mapped_column(Integer, default=30)
+    # Aumento mensual previsto de sueldos y tarifas, para proyectar el costo del trabajo pendiente
+    aumento_costos_mensual: Mapped[float] = mapped_column(Float, default=0.0)
     condiciones: Mapped[str | None] = mapped_column(Text)
 
 
@@ -163,6 +165,13 @@ class Proyecto(Timestamps, Base):
     impuesto: Mapped[float] = mapped_column(Float, default=0.0)
     # Precio acordado con el cliente (moneda base). Si hay presupuesto aprobado, sale de ahí.
     precio_base: Mapped[float | None] = mapped_column(Dinero)
+    # Contrato en otra moneda (p. ej. USD): el precio vale en esa moneda y se reexpresa a la base al día
+    moneda_contrato: Mapped[str | None] = mapped_column(String(3))
+    precio_contrato: Mapped[float | None] = mapped_column(Dinero)
+    # Cláusula de ajuste por inflación del precio en moneda base: "ipc" o None
+    ajuste_indice: Mapped[str | None] = mapped_column(String(10))
+    ajuste_cada_meses: Mapped[int | None] = mapped_column(Integer)   # 1 mensual, 3 trimestral, 6 semestral
+    ajuste_mes_base: Mapped[date | None] = mapped_column(Date)       # primer día del mes base
     es_ejemplo: Mapped[bool] = mapped_column(Boolean, default=False)
     cliente: Mapped[Cliente] = relationship()
     etapas: Mapped[list["Etapa"]] = relationship(back_populates="proyecto", cascade="all, delete-orphan",
@@ -183,6 +192,7 @@ class Presupuesto(Timestamps, Base):
     impuesto: Mapped[float] = mapped_column(Float, default=0.0)
     costo_base: Mapped[float | None] = mapped_column(Dinero)
     precio_base: Mapped[float | None] = mapped_column(Dinero)
+    moneda_contrato: Mapped[str | None] = mapped_column(String(3))  # None = moneda base
     fecha_envio: Mapped[date | None] = mapped_column(Date)
     fecha_aprobacion: Mapped[date | None] = mapped_column(Date)
     notas: Mapped[str | None] = mapped_column(Text)
@@ -304,6 +314,15 @@ class HoraReal(Timestamps, Base):
     costo_hora_base: Mapped[float] = mapped_column(Dinero)
     nota: Mapped[str | None] = mapped_column(Text)
     tarea: Mapped[Tarea] = relationship(back_populates="horas")
+
+
+class IndiceIPC(Base):
+    """Variación mensual del IPC (INDEC), en %: 1,9 = 1,9 % en ese mes."""
+    __tablename__ = "indices_ipc"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    mes: Mapped[date] = mapped_column(Date, unique=True)  # primer día del mes
+    variacion: Mapped[float] = mapped_column(Float)
+    fuente: Mapped[str | None] = mapped_column(String(40))
 
 
 class Historial(Base):

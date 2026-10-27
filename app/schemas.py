@@ -1,7 +1,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Copyright (c) 2026 Eduardo José Moreno. Desarrollo e Implementación: Lic. Eduardo J. Moreno
 """Esquemas Pydantic de entrada y salida de la API."""
-from datetime import date
+from datetime import date, timedelta
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
@@ -41,6 +42,7 @@ class ConfigIn(BaseModel):
     empresa_id_fiscal: str | None = Field(default=None, max_length=60)
     validez_dias: int = Field(default=30, ge=1, le=365)
     condiciones: str | None = None
+    aumento_costos_mensual: float = Field(default=0.0, ge=0, le=1)
 
 
 class ConfigOut(ConfigIn, ORM):
@@ -175,11 +177,25 @@ class ProyectoIn(BaseModel):
     margen: float = Field(default=0.35, ge=0, lt=1)
     impuesto: float = Field(default=0.0, ge=0, le=1)
     precio_base: float | None = Field(default=None, ge=0)
+    moneda_contrato: str | None = None   # vacío = moneda base
+    precio_contrato: float | None = Field(default=None, ge=0)
+    ajuste_indice: Literal["ipc"] | None = None
+    ajuste_cada_meses: int | None = Field(default=None, ge=1, le=12)
+    ajuste_mes_base: date | None = None
 
     @model_validator(mode="after")
     def _fechas(self):
         if self.fecha_fin < self.fecha_inicio:
             raise ValueError("La fecha de fin no puede ser anterior a la de inicio")
+        if self.moneda_contrato:
+            self.moneda_contrato = self.moneda_contrato.upper()
+            if self.moneda_contrato not in MONEDAS:
+                raise ValueError(ERROR_MONEDA)
+        if self.ajuste_indice:
+            self.ajuste_cada_meses = self.ajuste_cada_meses or 3
+            # por defecto, el mes anterior al inicio (último índice conocido al firmar)
+            self.ajuste_mes_base = (self.ajuste_mes_base or
+                                    (self.fecha_inicio.replace(day=1) - timedelta(days=1))).replace(day=1)
         return self
 
 
@@ -358,6 +374,7 @@ class PresupuestoIn(BaseModel):
     margen: float = Field(ge=0, lt=1)
     impuesto: float = Field(default=0, ge=0, le=1)
     precio_base: float | None = Field(default=None, ge=0, description="Precio final manual; vacío = sugerido")
+    moneda_contrato: str | None = None
     notas: str | None = None
     items: list[PresupuestoItemIn] = []
     externos: list[PresupuestoExternoIn] = []
@@ -365,3 +382,16 @@ class PresupuestoIn(BaseModel):
 
 class PresupuestoNuevo(BaseModel):
     copiar_de: int | None = None
+
+
+# --- Índice de inflación ---
+class IPCIn(BaseModel):
+    mes: date
+    variacion: float = Field(ge=-50, le=100, description="Variación mensual en %, p. ej. 1.9")
+
+
+class IPCOut(ORM):
+    id: int
+    mes: date
+    variacion: float
+    fuente: str | None = None

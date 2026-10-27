@@ -14,7 +14,7 @@ Todo funciona en tu computadora, sin internet. Los importes se calculan en una *
 
 ## 2. Instalación
 
-1. Abrí el instalador **Presupuestos-Setup-0.5.0.exe** (el número cambia con cada versión).
+1. Abrí el instalador **Presupuestos-Setup-0.6.0.exe** (el número cambia con cada versión).
 2. Windows puede mostrar el aviso **"Windows protegió su PC"**, porque el programa no tiene firma digital comercial. Hacé clic en **Más información** y después en **Ejecutar de todos modos**. Es un aviso normal para programas sin firma comercial.
 3. Seguí el asistente: **Siguiente → Instalar → Finalizar**. No pide contraseña de administrador.
 4. Al terminar queda un acceso directo **Presupuestos** en el escritorio y en el menú Inicio. En el menú Inicio también encontrás este manual y la carpeta de datos.
@@ -99,6 +99,7 @@ En **Configuración → Parámetros de costeo**:
 | Margen objetivo | Ganancia buscada sobre el precio | 35% |
 | Alerta si el margen baja de | Debajo de este margen los números se ponen en naranja | 25% |
 | Impuesto por defecto | Solo un % que se suma al precio (por ejemplo, IVA). Qué impuesto corresponde lo define el contador | 0% |
+| Aumento previsto de costos | Cuánto estimás que suben por mes sueldos y tarifas. Se usa para proyectar el costo del trabajo que falta hacer en cada proyecto (ver 8.1) | según tu estimación de inflación; 0 = sin aumento |
 | Zona horaria | Tu zona horaria | America/Argentina/Buenos_Aires |
 
 Los porcentajes de contribuciones son orientativos: la alícuota exacta y la de la ART dependen de la actividad, el tamaño de la empresa y la póliza. Confirmalos con tu contador.
@@ -107,11 +108,15 @@ Los porcentajes de contribuciones son orientativos: la alícuota exacta y la de 
 
 **Cotizaciones**: escribí cuánto vale **1 unidad de cada moneda en la moneda base** (por ejemplo, 1 USD = 1.540 ARS) y guardá. Completá solo las monedas que uses.
 
+Más rápido: elegí la fecha y tocá **Traer del BCRA**. El programa consulta la cotización oficial publicada por el Banco Central para ese día y carga todas las monedas de una vez (si la moneda base no es ARS, calcula el cruce). Necesita internet y solo consulta datos públicos: no envía ninguna información tuya. Los fines de semana y feriados no hay publicación: elegí el último día hábil.
+
 - Sin cotización, el programa no puede calcular el costo de una persona o un gasto en esa moneda, ni mostrar la propuesta en dólares, y te lo avisa.
 - **Para cambiar el tipo de cambio**, cargá la nueva cotización con su fecha. Si ya había una para esa fecha y moneda, se reemplaza. Desde esa fecha se usa la nueva; las horas y tareas ya cargadas conservan el valor con el que se registraron.
 - El gráfico **Evolución** muestra cómo cambió cada moneda; elegila en el selector.
 
 ![Cotizaciones](assets/manual/03_cotizaciones.png)
+
+**Inflación mensual (IPC).** En la misma pantalla, la tabla **Inflación mensual (IPC INDEC)** guarda la variación de cada mes. Tocá **Actualizar desde el BCRA** para traer toda la serie publicada (también se puede cargar un mes a mano). Se usa para los proyectos con cláusula de ajuste por IPC (sección 5).
 
 ### 4.6 Cargar el equipo
 
@@ -145,7 +150,12 @@ La tabla muestra el **costo estimado** y el **precio sugerido** de cada servicio
 
 ## 5. Crear un proyecto
 
-**Proyectos → + Proyecto.** Completá nombre, cliente (con **+ Cliente** creás uno nuevo), fecha de inicio y de fin, y, si ya lo tenés acordado, el **precio** en la moneda base. Si todavía lo estás cotizando, dejalo vacío, poné el estado **En presupuesto** y armá el presupuesto (sección 5.1): al aprobarlo, el precio se completa solo. Dentro del proyecto, junto al precio, se ve su **equivalente en dólares** con la cotización vigente. Dejá tildado **Crear etapas desde la plantilla**: el proyecto nace con las etapas Inicio, Planificación, Ejecución y Cierre, con fechas repartidas a lo largo del plazo.
+**Proyectos → + Proyecto.** Completá nombre, cliente (con **+ Cliente** creás uno nuevo), fecha de inicio y de fin, y, si ya lo tenés acordado, el **precio** en la moneda base. Si todavía lo estás cotizando, dejalo vacío, poné el estado **En presupuesto** y armá el presupuesto (sección 5.1): al aprobarlo, el precio se completa solo. Dentro del proyecto, junto al precio, se ve su **equivalente en dólares** con la cotización vigente.
+
+**Contratos en dólares o con ajuste por inflación.** En **Editar** del proyecto:
+
+- **Moneda del contrato**: si cotizás en dólares (u otra moneda) y cobrás en pesos, elegí esa moneda y escribí el **precio en esa moneda**. El precio queda fijo en dólares y el programa lo reexpresa en pesos con la cotización de cada día: el margen, la cartera y los informes reflejan el valor actual del contrato. Las propuestas para el cliente salen en la moneda del contrato.
+- **Ajuste por inflación** (para contratos en pesos): **IPC mensual, trimestral o semestral** desde un **mes base** (por defecto, el mes anterior al inicio). En cada período el precio se actualiza por la inflación acumulada desde el mes base hasta el último IPC publicado (el del mes anterior). La cabecera del proyecto muestra el precio original, el ajustado, el % aplicado y el próximo ajuste; la propuesta incluye la cláusula. Si falta algún mes de IPC, se usa lo publicado y se avisa. Dejá tildado **Crear etapas desde la plantilla**: el proyecto nace con las etapas Inicio, Planificación, Ejecución y Cierre, con fechas repartidas a lo largo del plazo.
 
 ![Nuevo proyecto](assets/manual/07_nuevo_proyecto.png)
 
@@ -168,7 +178,8 @@ En el proyecto, pestaña **Presupuesto → + Nueva versión**. Si el proyecto es
 1. Agregá ítems con **Agregar desde el catálogo…** (trae actividad, etapa, rol y horas del servicio) o con **+ Ítem libre**.
 2. Ajustá cada ítem: etapa, actividad, rol, **responsable** (opcional: si lo elegís se usa su costo; si no, el promedio del rol), horas o % sobre el total, y **costo por hora** si querés fijarlo a mano.
 3. Cargá los **gastos externos** previstos (licencias, hosting, impresión) en cualquier moneda.
-4. Revisá el **margen objetivo** y el **impuesto**. El **precio sugerido** sale de costo ÷ (1 − margen); si querés redondearlo o hacer un descuento, escribí el **precio final** y el resumen muestra el **margen real** resultante y su equivalente en dólares.
+4. Si el contrato va a ser en dólares, elegí la **Moneda del contrato**: el resumen muestra el precio en esa moneda y, al aprobar, el proyecto queda con el precio fijo en dólares.
+5. Revisá el **margen objetivo** y el **impuesto**. El **precio sugerido** sale de costo ÷ (1 − margen); si querés redondearlo o hacer un descuento, escribí el **precio final** y el resumen muestra el **margen real** resultante y su equivalente en dólares.
 
 Todo se guarda solo a medida que escribís. Si un ítem queda "sin costo" (por ejemplo, un rol sin personas), el programa lo avisa y no deja aprobar.
 
@@ -276,7 +287,7 @@ En el cronograma el rombo del hito se pinta de verde y la tarjeta muestra "Aprob
 - **Avance ponderado**: cuánto del proyecto está hecho, sumando el avance de cada etapa según su peso. La **línea negra** sobre la barra marca lo que debería estar hecho a hoy según las fechas. Si la barra queda antes de la línea, el proyecto está atrasado y se pinta de naranja.
 - **CPI (eficiencia en costo)**: cuánto trabajo se obtiene por cada peso gastado. **1,00** = según lo previsto. **0,80** = por cada peso gastado se obtuvieron 80 centavos de trabajo planificado: se está gastando un 25% más de lo previsto.
 - **SPI (eficiencia en plazo)**: cuánto se avanzó respecto de lo planificado. **0,87** = se hizo el 87% de lo que debería estar hecho a hoy.
-- **Margen proyectado**: el margen que va a quedar si el proyecto sigue gastando al ritmo actual. Se compara con el **margen previsto** al planificar.
+- **Margen proyectado**: el margen que va a quedar si el proyecto sigue gastando al ritmo actual. Se compara con el **margen previsto** al planificar. Usa el **precio vigente** (reexpresado si el contrato es en dólares, ajustado si tiene cláusula de IPC) y, si configuraste un **aumento previsto de costos**, proyecta con ese aumento el costo del trabajo que falta hacer. Así ves el margen real en contextos de inflación.
 - **Próximo hito**: el primer hito pendiente y su fecha prevista.
 
 Colores: **verde** = bien (índice ≥ 0,98 o margen sobre la alerta); **naranja** = atención (0,90 a 0,98, o margen bajo la alerta); **rojo** = problema (menor que 0,90, o margen negativo).
@@ -374,7 +385,7 @@ Los archivos se descargan en la carpeta **Descargas** con el nombre del proyecto
 
 ## 11. Actualizaciones
 
-Cuando recibas una versión nueva (por ejemplo **Presupuestos-Setup-0.5.0.exe**), cerrá el programa y ejecutá el instalador nuevo: reemplaza el programa y conserva todos los datos. La base se adapta sola a la versión nueva la primera vez que la abrís.
+Cuando recibas una versión nueva (por ejemplo **Presupuestos-Setup-0.6.0.exe**), cerrá el programa y ejecutá el instalador nuevo: reemplaza el programa y conserva todos los datos. La base se adapta sola a la versión nueva la primera vez que la abrís.
 
 Si venías usando una versión anterior en dólares, se conservan todos los importes y la moneda base sigue siendo **USD**. El logo que traía esa versión ya no viene incluido: si querés verlo en la barra, cargalo en **Configuración → Datos de la empresa**.
 
@@ -384,7 +395,8 @@ Si venías usando una versión anterior en dólares, se conservan todos los impo
 | --- | --- |
 | Windows dice "Windows protegió su PC" | **Más información → Ejecutar de todos modos** (sección 2) |
 | El navegador dice "No se puede acceder a este sitio" | El programa está cerrado: abrilo con el acceso directo. Si la ventana negra está abierta, esperá unos segundos y recargá |
-| "No hay cotización cargada para USD" | Cargá la cotización en **Cotizaciones** |
+| "No hay cotización cargada para USD" | Cargá la cotización en **Cotizaciones** o tocá **Traer del BCRA** |
+| "No se pudo conectar con el BCRA" | Revisá la conexión a internet o cargá el dato a mano. El resto del programa funciona igual sin internet |
 | No me deja cambiar la moneda base | Ya hay datos cargados. Ver sección 4.2 |
 | La barra no muestra logo | El logo es opcional: cargalo en **Configuración → Datos de la empresa** |
 | Un costo por hora aparece como "—" | Falta la cotización de la moneda de esa persona |
@@ -413,6 +425,8 @@ Si venías usando una versión anterior en dólares, se conservan todos los impo
 | Costo final estimado (EAC) | Costo previsto ÷ CPI, más los gastos externos: cuánto va a costar el proyecto si sigue igual |
 | Avance ponderado | Suma del avance de cada etapa multiplicado por su peso |
 | Hito | Entregable que marca el cierre de una etapa |
+| Moneda del contrato | Moneda en la que se acordó el precio con el cliente (por ejemplo, USD); en pesos se reexpresa con la cotización de cada día |
+| IPC | Índice de precios al consumidor del INDEC; su variación mensual ajusta los contratos en pesos con cláusula de ajuste |
 | Versión del presupuesto | Cada propuesta de precio y alcance enviada al cliente; la aprobada congela costos y genera las tareas |
 
 <a id="licencia"></a>

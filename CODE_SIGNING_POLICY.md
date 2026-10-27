@@ -26,7 +26,8 @@ Todos los miembros usan autenticación de dos factores en GitHub y en SignPath.
 ## Privacidad
 
 Este programa no transfiere información a ningún otro sistema conectado a la red, salvo que el
-usuario lo pida expresamente. Todos los datos se guardan en la computadora del usuario
+usuario lo pida expresamente (botones "Traer del BCRA" y "Actualizar desde el BCRA", que solo
+consultan cotizaciones e inflación publicadas por el Banco Central, sin enviar datos). Todos los datos se guardan en la computadora del usuario
 (`%LOCALAPPDATA%\PresupuestosApp`). El programa incluye desinstalador y desinstalarlo no borra los datos.
 
 This program will not transfer any information to other networked systems unless specifically

@@ -43,6 +43,11 @@ _ES = dict(
     actividades="Actividades", actividad="Actividad", fechas_previstas="Fechas previstas", hecha="Hecha",
     graf_avance="Avance vs planificado por etapa",
     nombre_propuesta="Propuesta", nombre_avance="Informe de avance",
+    periodos={1: "mensual", 3: "trimestral", 6: "semestral", 12: "anual"}, cada_n_meses="cada {n} meses",
+    nota_ipc="Los precios en pesos se ajustan en forma {p} por la variación del IPC (INDEC) desde {m}.",
+    meses_largos=["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre",
+                  "octubre", "noviembre", "diciembre"],
+    nota_fx2="Los importes en {m} son de referencia, a 1 {x} = {v} {y} ({f}). Los importes vinculantes están en {b}.",
 )
 
 _EN = dict(
@@ -82,6 +87,11 @@ _EN = dict(
     actividades="Activities", actividad="Activity", fechas_previstas="Planned dates", hecha="Done",
     graf_avance="Progress vs planned by stage",
     nombre_propuesta="Proposal", nombre_avance="Progress report",
+    periodos={1: "monthly", 3: "quarterly", 6: "every six months", 12: "yearly"}, cada_n_meses="every {n} months",
+    nota_ipc="Prices in Argentine pesos are adjusted {p} by the change in the CPI (INDEC) since {m}.",
+    meses_largos=["January", "February", "March", "April", "May", "June", "July", "August", "September",
+                  "October", "November", "December"],
+    nota_fx2="Amounts in {m} are for reference, at 1 {x} = {v} {y} ({f}). The binding amounts are in {b}.",
 )
 
 TEXTOS = {"es": _ES, "en": _EN}
@@ -99,3 +109,15 @@ def numero(v: float, decimales: int, idioma: str) -> str:
     """1234.5 -> '1.234,50' (es) o '1,234.50' (en)."""
     s = f"{v:,.{decimales}f}"
     return s.replace(",", "_").replace(".", ",").replace("_", ".") if idioma == "es" else s
+
+
+def mes_anio(d: date, t: dict) -> str:
+    return f"{t['meses_largos'][d.month - 1]} {d.year}"
+
+
+def nota_fx(fx: dict, mon: str, t: dict, idioma: str) -> str:
+    """Aclaración de la columna en otra moneda, con la cotización expresada en el sentido legible."""
+    m, v = fx["moneda"], fx["valor"]
+    x, y, val = (m, mon, v) if v >= 1 else (mon, m, 1 / v)
+    return t["nota_fx2"].format(m=m, x=x, v=numero(val, 4 if val < 100 else 2, idioma), y=y,
+                                f=fecha(fx["fecha"], t), b=mon)

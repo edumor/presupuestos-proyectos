@@ -27,7 +27,7 @@
 <body>
 <main style="max-width:1180px">
   <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap">
-    <div><h1>Ayuda</h1><p class="sub">Manual de uso — Presupuestos y seguimiento de proyectos · versión 0.5.0</p></div>
+    <div><h1>Ayuda</h1><p class="sub">Manual de uso — Presupuestos y seguimiento de proyectos · versión 0.6.0</p></div>
     <a href="manual.pdf" download><button>Descargar el manual en PDF</button></a>
   </div>
   <div class="manual">
@@ -43,7 +43,7 @@
 <p>Todo funciona en tu computadora, sin internet. Los importes se calculan en una <strong>moneda base</strong> que se elige al empezar: por defecto, <strong>pesos argentinos (ARS)</strong>. Los sueldos, tarifas o gastos en otra moneda (dólares, euros, reales…) se convierten con las cotizaciones que cargás, y las propuestas pueden mostrar también el <strong>equivalente en dólares (USD)</strong>.</p>
 <h2 id="2-instalacion">2. Instalación</h2>
 <ol>
-<li>Abrí el instalador <strong>Presupuestos-Setup-0.5.0.exe</strong> (el número cambia con cada versión).</li>
+<li>Abrí el instalador <strong>Presupuestos-Setup-0.6.0.exe</strong> (el número cambia con cada versión).</li>
 <li>Windows puede mostrar el aviso <strong>"Windows protegió su PC"</strong>, porque el programa no tiene firma digital comercial. Hacé clic en <strong>Más información</strong> y después en <strong>Ejecutar de todos modos</strong>. Es un aviso normal para programas sin firma comercial.</li>
 <li>Seguí el asistente: <strong>Siguiente → Instalar → Finalizar</strong>. No pide contraseña de administrador.</li>
 <li>Al terminar queda un acceso directo <strong>Presupuestos</strong> en el escritorio y en el menú Inicio. En el menú Inicio también encontrás este manual y la carpeta de datos.</li>
@@ -217,6 +217,11 @@
 <td>0%</td>
 </tr>
 <tr>
+<td>Aumento previsto de costos</td>
+<td>Cuánto estimás que suben por mes sueldos y tarifas. Se usa para proyectar el costo del trabajo que falta hacer en cada proyecto (ver 8.1)</td>
+<td>según tu estimación de inflación; 0 = sin aumento</td>
+</tr>
+<tr>
 <td>Zona horaria</td>
 <td>Tu zona horaria</td>
 <td>America/Argentina/Buenos_Aires</td>
@@ -226,12 +231,14 @@
 <p>Los porcentajes de contribuciones son orientativos: la alícuota exacta y la de la ART dependen de la actividad, el tamaño de la empresa y la póliza. Confirmalos con tu contador.</p>
 <h3 id="45-cargar-las-cotizaciones">4.5 Cargar las cotizaciones</h3>
 <p><strong>Cotizaciones</strong>: escribí cuánto vale <strong>1 unidad de cada moneda en la moneda base</strong> (por ejemplo, 1 USD = 1.540 ARS) y guardá. Completá solo las monedas que uses.</p>
+<p>Más rápido: elegí la fecha y tocá <strong>Traer del BCRA</strong>. El programa consulta la cotización oficial publicada por el Banco Central para ese día y carga todas las monedas de una vez (si la moneda base no es ARS, calcula el cruce). Necesita internet y solo consulta datos públicos: no envía ninguna información tuya. Los fines de semana y feriados no hay publicación: elegí el último día hábil.</p>
 <ul>
 <li>Sin cotización, el programa no puede calcular el costo de una persona o un gasto en esa moneda, ni mostrar la propuesta en dólares, y te lo avisa.</li>
 <li><strong>Para cambiar el tipo de cambio</strong>, cargá la nueva cotización con su fecha. Si ya había una para esa fecha y moneda, se reemplaza. Desde esa fecha se usa la nueva; las horas y tareas ya cargadas conservan el valor con el que se registraron.</li>
 <li>El gráfico <strong>Evolución</strong> muestra cómo cambió cada moneda; elegila en el selector.</li>
 </ul>
 <figure><img alt="Cotizaciones" src="assets/manual/03_cotizaciones.png"><figcaption>Cotizaciones</figcaption></figure>
+<p><strong>Inflación mensual (IPC).</strong> En la misma pantalla, la tabla <strong>Inflación mensual (IPC INDEC)</strong> guarda la variación de cada mes. Tocá <strong>Actualizar desde el BCRA</strong> para traer toda la serie publicada (también se puede cargar un mes a mano). Se usa para los proyectos con cláusula de ajuste por IPC (sección 5).</p>
 <h3 id="46-cargar-el-equipo">4.6 Cargar el equipo</h3>
 <p><strong>Equipo → + Persona.</strong> Por cada persona:</p>
 <ul>
@@ -254,7 +261,12 @@
 <p>La tabla muestra el <strong>costo estimado</strong> y el <strong>precio sugerido</strong> de cada servicio con el margen objetivo. Un servicio que ya se usó en presupuestos no se borra: queda inactivo.</p>
 <figure><img alt="Catálogo de servicios" src="assets/manual/20_servicios.png"><figcaption>Catálogo de servicios</figcaption></figure>
 <h2 id="5-crear-un-proyecto">5. Crear un proyecto</h2>
-<p><strong>Proyectos → + Proyecto.</strong> Completá nombre, cliente (con <strong>+ Cliente</strong> creás uno nuevo), fecha de inicio y de fin, y, si ya lo tenés acordado, el <strong>precio</strong> en la moneda base. Si todavía lo estás cotizando, dejalo vacío, poné el estado <strong>En presupuesto</strong> y armá el presupuesto (sección 5.1): al aprobarlo, el precio se completa solo. Dentro del proyecto, junto al precio, se ve su <strong>equivalente en dólares</strong> con la cotización vigente. Dejá tildado <strong>Crear etapas desde la plantilla</strong>: el proyecto nace con las etapas Inicio, Planificación, Ejecución y Cierre, con fechas repartidas a lo largo del plazo.</p>
+<p><strong>Proyectos → + Proyecto.</strong> Completá nombre, cliente (con <strong>+ Cliente</strong> creás uno nuevo), fecha de inicio y de fin, y, si ya lo tenés acordado, el <strong>precio</strong> en la moneda base. Si todavía lo estás cotizando, dejalo vacío, poné el estado <strong>En presupuesto</strong> y armá el presupuesto (sección 5.1): al aprobarlo, el precio se completa solo. Dentro del proyecto, junto al precio, se ve su <strong>equivalente en dólares</strong> con la cotización vigente.</p>
+<p><strong>Contratos en dólares o con ajuste por inflación.</strong> En <strong>Editar</strong> del proyecto:</p>
+<ul>
+<li><strong>Moneda del contrato</strong>: si cotizás en dólares (u otra moneda) y cobrás en pesos, elegí esa moneda y escribí el <strong>precio en esa moneda</strong>. El precio queda fijo en dólares y el programa lo reexpresa en pesos con la cotización de cada día: el margen, la cartera y los informes reflejan el valor actual del contrato. Las propuestas para el cliente salen en la moneda del contrato.</li>
+<li><strong>Ajuste por inflación</strong> (para contratos en pesos): <strong>IPC mensual, trimestral o semestral</strong> desde un <strong>mes base</strong> (por defecto, el mes anterior al inicio). En cada período el precio se actualiza por la inflación acumulada desde el mes base hasta el último IPC publicado (el del mes anterior). La cabecera del proyecto muestra el precio original, el ajustado, el % aplicado y el próximo ajuste; la propuesta incluye la cláusula. Si falta algún mes de IPC, se usa lo publicado y se avisa. Dejá tildado <strong>Crear etapas desde la plantilla</strong>: el proyecto nace con las etapas Inicio, Planificación, Ejecución y Cierre, con fechas repartidas a lo largo del plazo.</li>
+</ul>
 <figure><img alt="Nuevo proyecto" src="assets/manual/07_nuevo_proyecto.png"><figcaption>Nuevo proyecto</figcaption></figure>
 <h3 id="la-plantilla-de-etapas">La plantilla de etapas</h3>
 <p><strong>Proyectos → Plantilla de etapas</strong> define las etapas con las que nace cada proyecto nuevo. Cambiarla no afecta a los proyectos que ya existen.</p>
@@ -271,6 +283,7 @@
 <li>Agregá ítems con <strong>Agregar desde el catálogo…</strong> (trae actividad, etapa, rol y horas del servicio) o con <strong>+ Ítem libre</strong>.</li>
 <li>Ajustá cada ítem: etapa, actividad, rol, <strong>responsable</strong> (opcional: si lo elegís se usa su costo; si no, el promedio del rol), horas o % sobre el total, y <strong>costo por hora</strong> si querés fijarlo a mano.</li>
 <li>Cargá los <strong>gastos externos</strong> previstos (licencias, hosting, impresión) en cualquier moneda.</li>
+<li>Si el contrato va a ser en dólares, elegí la <strong>Moneda del contrato</strong>: el resumen muestra el precio en esa moneda y, al aprobar, el proyecto queda con el precio fijo en dólares.</li>
 <li>Revisá el <strong>margen objetivo</strong> y el <strong>impuesto</strong>. El <strong>precio sugerido</strong> sale de costo ÷ (1 − margen); si querés redondearlo o hacer un descuento, escribí el <strong>precio final</strong> y el resumen muestra el <strong>margen real</strong> resultante y su equivalente en dólares.</li>
 </ol>
 <p>Todo se guarda solo a medida que escribís. Si un ítem queda "sin costo" (por ejemplo, un rol sin personas), el programa lo avisa y no deja aprobar.</p>
@@ -407,7 +420,7 @@
 <li><strong>Avance ponderado</strong>: cuánto del proyecto está hecho, sumando el avance de cada etapa según su peso. La <strong>línea negra</strong> sobre la barra marca lo que debería estar hecho a hoy según las fechas. Si la barra queda antes de la línea, el proyecto está atrasado y se pinta de naranja.</li>
 <li><strong>CPI (eficiencia en costo)</strong>: cuánto trabajo se obtiene por cada peso gastado. <strong>1,00</strong> = según lo previsto. <strong>0,80</strong> = por cada peso gastado se obtuvieron 80 centavos de trabajo planificado: se está gastando un 25% más de lo previsto.</li>
 <li><strong>SPI (eficiencia en plazo)</strong>: cuánto se avanzó respecto de lo planificado. <strong>0,87</strong> = se hizo el 87% de lo que debería estar hecho a hoy.</li>
-<li><strong>Margen proyectado</strong>: el margen que va a quedar si el proyecto sigue gastando al ritmo actual. Se compara con el <strong>margen previsto</strong> al planificar.</li>
+<li><strong>Margen proyectado</strong>: el margen que va a quedar si el proyecto sigue gastando al ritmo actual. Se compara con el <strong>margen previsto</strong> al planificar. Usa el <strong>precio vigente</strong> (reexpresado si el contrato es en dólares, ajustado si tiene cláusula de IPC) y, si configuraste un <strong>aumento previsto de costos</strong>, proyecta con ese aumento el costo del trabajo que falta hacer. Así ves el margen real en contextos de inflación.</li>
 <li><strong>Próximo hito</strong>: el primer hito pendiente y su fecha prevista.</li>
 </ul>
 <p>Colores: <strong>verde</strong> = bien (índice ≥ 0,98 o margen sobre la alerta); <strong>naranja</strong> = atención (0,90 a 0,98, o margen bajo la alerta); <strong>rojo</strong> = problema (menor que 0,90, o margen negativo).</p>
@@ -510,7 +523,7 @@
 <li>Recomendación: una vez por semana copiá el último respaldo a OneDrive, Google Drive o un pendrive.</li>
 </ul>
 <h2 id="11-actualizaciones">11. Actualizaciones</h2>
-<p>Cuando recibas una versión nueva (por ejemplo <strong>Presupuestos-Setup-0.5.0.exe</strong>), cerrá el programa y ejecutá el instalador nuevo: reemplaza el programa y conserva todos los datos. La base se adapta sola a la versión nueva la primera vez que la abrís.</p>
+<p>Cuando recibas una versión nueva (por ejemplo <strong>Presupuestos-Setup-0.6.0.exe</strong>), cerrá el programa y ejecutá el instalador nuevo: reemplaza el programa y conserva todos los datos. La base se adapta sola a la versión nueva la primera vez que la abrís.</p>
 <p>Si venías usando una versión anterior en dólares, se conservan todos los importes y la moneda base sigue siendo <strong>USD</strong>. El logo que traía esa versión ya no viene incluido: si querés verlo en la barra, cargalo en <strong>Configuración → Datos de la empresa</strong>.</p>
 <h2 id="12-problemas-frecuentes">12. Problemas frecuentes</h2>
 <table>
@@ -531,7 +544,11 @@
 </tr>
 <tr>
 <td>"No hay cotización cargada para USD"</td>
-<td>Cargá la cotización en <strong>Cotizaciones</strong></td>
+<td>Cargá la cotización en <strong>Cotizaciones</strong> o tocá <strong>Traer del BCRA</strong></td>
+</tr>
+<tr>
+<td>"No se pudo conectar con el BCRA"</td>
+<td>Revisá la conexión a internet o cargá el dato a mano. El resto del programa funciona igual sin internet</td>
 </tr>
 <tr>
 <td>No me deja cambiar la moneda base</td>
@@ -635,6 +652,14 @@
 <tr>
 <td>Hito</td>
 <td>Entregable que marca el cierre de una etapa</td>
+</tr>
+<tr>
+<td>Moneda del contrato</td>
+<td>Moneda en la que se acordó el precio con el cliente (por ejemplo, USD); en pesos se reexpresa con la cotización de cada día</td>
+</tr>
+<tr>
+<td>IPC</td>
+<td>Índice de precios al consumidor del INDEC; su variación mensual ajusta los contratos en pesos con cláusula de ajuste</td>
 </tr>
 <tr>
 <td>Versión del presupuesto</td>

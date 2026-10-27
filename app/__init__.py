@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Copyright (c) 2026 Eduardo José Moreno. Desarrollo e Implementación: Lic. Eduardo J. Moreno
 """Sistema de presupuestos y seguimiento de proyectos."""
-__version__ = "0.5.0"
+__version__ = "0.6.0"
 CREDITO = "Desarrollo e Implementación: Lic. Eduardo J. Moreno"

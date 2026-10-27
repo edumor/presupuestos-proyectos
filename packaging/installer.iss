@@ -1,6 +1,6 @@
 ; Instalador de Presupuestos (Inno Setup 6). Lo compila packaging\build.bat.
 #ifndef AppVersion
-  #define AppVersion "0.5.0"
+  #define AppVersion "0.6.0"
 #endif
 #define AppName "Presupuestos"
 #define AppExe "PresupuestosApp.exe"

@@ -108,7 +108,12 @@
       <label class="full">Cliente<select name="cliente_id" id="sel-cliente"></select></label>
       <label>Inicio<input name="fecha_inicio" type="date" required></label>
       <label>Fin<input name="fecha_fin" type="date" required></label>
-      <label>Precio acordado (<span class="mb"></span>)<input name="precio_base" type="number" step="0.01" min="0"></label>
+      <label>Moneda del contrato<select name="moneda_contrato" data-monedas id="sel-moneda-contrato"></select></label>
+      <label id="lbl-precio-base"><span>Precio acordado (<span class="mb"></span>)</span><input name="precio_base" type="number" step="0.01" min="0"></label>
+      <label id="lbl-precio-contrato" hidden><span>Precio en <span id="mc-txt"></span></span><input name="precio_contrato" type="number" step="0.01" min="0"></label>
+      <label id="lbl-ajuste">Ajuste por inflación<select id="sel-ajuste"><option value="">Sin ajuste (precio fijo)</option>
+        <option value="1">IPC mensual</option><option value="3">IPC trimestral</option><option value="6">IPC semestral</option></select></label>
+      <label id="lbl-mes-base" hidden>Mes base del IPC<input type="month" id="mes-base"></label>
       <label>Estado<select name="estado"></select></label>
       <label class="full">Alcance<textarea name="alcance" rows="2"></textarea></label>
     </div>
@@ -182,8 +187,16 @@ async function cargar() {
   document.title = P.nombre + ' · Presupuestos';
   document.getElementById('titulo').textContent = P.nombre;
   document.getElementById('subtitulo').innerHTML = `${esc(P.cliente_nombre || '')} · ${fmtFecha(P.fecha_inicio)} → ${fmtFecha(P.fecha_fin)} · <span class="tag">${ESTADOS_PROY[P.estado]}</span>`;
-  if (P.precio_base) equivalente(P.precio_base).then(eq => {
-    document.getElementById('subtitulo').insertAdjacentHTML('beforeend', `<br>Precio ${fmtBase(P.precio_base)}${eq ? ' <span class="muted">(' + eq + ')</span>' : ''}`);
+  const c = S.contrato || {}, sub = document.getElementById('subtitulo');
+  if (c.tipo === 'moneda') {
+    sub.insertAdjacentHTML('beforeend', `<br>Contrato en ${c.moneda}: <strong>${fmtBase(c.precio_contrato, c.moneda)}</strong>`
+      + (c.cotizacion ? ` <span class="muted">= ${fmtBase(c.precio)} a 1 ${c.moneda} = ${fmtNum(c.cotizacion)} ${BASE}</span>` : ' <span class="v-bad">sin cotización</span>'));
+  } else if (c.tipo === 'ipc') {
+    sub.insertAdjacentHTML('beforeend', `<br>Precio ${fmtBase(c.original)} ajustado por IPC: <strong>${fmtBase(c.precio)}</strong> `
+      + `<span class="muted">(+${fmtPct(c.factor - 1, 1)}${c.hasta ? ' hasta ' + fmtFecha(c.hasta).slice(3) : ''} · próximo ajuste ${fmtFecha(c.proximo_ajuste).slice(3)}`
+      + `${c.faltan_datos ? ' · faltan ' + c.faltan_datos + ' meses de IPC' : ''})</span>`);
+  } else if (P.precio_base) equivalente(P.precio_base).then(eq => {
+    sub.insertAdjacentHTML('beforeend', `<br>Precio ${fmtBase(P.precio_base)}${eq ? ' <span class="muted">(' + eq + ')</span>' : ''}`);
   });
   pintarKpis(); pintarEtapas(); pintarGantt(); pintarGraficos(); pintarTareas(); cargarHorasGastos();
 }
@@ -199,7 +212,8 @@ function pintarKpis() {
         'CPI = valor ganado ÷ costo real. Menor que 1: se está gastando más de lo previsto por el trabajo hecho.'),
     kpi('Eficiencia en plazo (SPI)', fmtNum(S.spi), `ganado ${fmtBase(S.ev)} / planificado ${fmtBase(S.pv)}`, claseIndice(S.spi),
         'SPI = valor ganado ÷ valor planificado. Menor que 1: el proyecto va atrasado.'),
-    kpi('Margen proyectado', fmtPct(S.margen_proyectado, 1), `previsto ${fmtPct(S.margen_previsto, 1)} · costo final est. ${fmtBase(S.eac)}`,
+    kpi('Margen proyectado', fmtPct(S.margen_proyectado, 1), `previsto ${fmtPct(S.margen_previsto, 1)} · costo final est. ${fmtBase(S.eac)}`
+        + (S.aumento_costos_mensual ? ` · incluye aumento de costos de ${fmtPct(S.aumento_costos_mensual, 1)}/mes` : ''),
         claseMargen(S.margen_proyectado, al), 'Si el proyecto sigue gastando como hasta ahora: (precio − costo final estimado) ÷ precio.'),
   ].join('');
   document.getElementById('hito').innerHTML = ph ? `<div class="card" style="margin-top:16px;padding:14px 20px"><span class="muted small">Próximo hito</span> <strong style="margin-left:8px">◇ ${esc(ph.hito)}</strong> <span class="muted small">· ${esc(ph.etapa)} · previsto ${fmtFecha(ph.fecha)}</span></div>` : '';
@@ -378,12 +392,31 @@ async function borrarEtapa() {
 async function abrirProyecto() {
   const cs = await api('/clientes');
   document.getElementById('sel-cliente').innerHTML = cs.map(c => `<option value="${c.id}">${esc(c.nombre)}</option>`).join('');
-  llenarForm(document.getElementById('f-proyecto'), P);
+  const f = document.getElementById('f-proyecto');
+  llenarForm(f, { ...P, moneda_contrato: P.moneda_contrato || BASE });
+  document.getElementById('sel-ajuste').value = P.ajuste_indice === 'ipc' ? String(P.ajuste_cada_meses || 3) : '';
+  document.getElementById('mes-base').value = (P.ajuste_mes_base || P.fecha_inicio || '').slice(0, 7);
+  ajustarContrato();
   document.getElementById('dlg-proyecto').showModal();
 }
+function ajustarContrato() {
+  const mc = document.getElementById('sel-moneda-contrato').value, otra = mc && mc !== BASE;
+  document.getElementById('lbl-precio-base').hidden = otra;
+  document.getElementById('lbl-precio-contrato').hidden = !otra;
+  document.getElementById('mc-txt').textContent = mc;
+  document.getElementById('lbl-ajuste').hidden = otra;
+  document.getElementById('lbl-mes-base').hidden = otra || !document.getElementById('sel-ajuste').value;
+}
+document.getElementById('sel-moneda-contrato').addEventListener('change', ajustarContrato);
+document.getElementById('sel-ajuste').addEventListener('change', ajustarContrato);
 document.getElementById('f-proyecto').addEventListener('submit', async ev => {
   ev.preventDefault();
   const d = { ...P, ...datosForm(ev.target) }; d.cliente_id = Number(d.cliente_id);
+  if (d.moneda_contrato === BASE) { d.moneda_contrato = null; d.precio_contrato = null; }
+  const aj = document.getElementById('sel-ajuste').value, mb = document.getElementById('mes-base').value;
+  d.ajuste_indice = (aj && !d.moneda_contrato) ? 'ipc' : null;
+  d.ajuste_cada_meses = d.ajuste_indice ? Number(aj) : null;
+  d.ajuste_mes_base = d.ajuste_indice && mb ? mb + '-01' : null;
   try { await api('/proyectos/' + PID, { method: 'PUT', body: d }); document.getElementById('dlg-proyecto').close(); toast('Proyecto guardado'); cargar(); }
   catch (e) { toast(e.message, true); }
 });

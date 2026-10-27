@@ -55,7 +55,7 @@ def health():
     return {"status": "ok", "version": __version__, "data_dir": str(data_dir())}
 
 
-for r in (config.router, cotizaciones.router, equipo.router, estructura.router, ejemplo.router,
+for r in (config.router, cotizaciones.router, cotizaciones.ipc_router, equipo.router, estructura.router, ejemplo.router,
           proyectos.router, presupuestos.router, horas.router, dashboard.router, exportar.router):
     app.include_router(r)
 

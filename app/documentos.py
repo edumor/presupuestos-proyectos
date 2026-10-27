@@ -44,7 +44,9 @@ def datos(db: Session, p: Proyecto, a_fecha: date | None = None, moneda: str | N
         tareas_por_etapa.setdefault(t.etapa_id, []).append(t)
 
     filas = [e for e in m["etapas"]]
-    precio = float(p.precio_base or 0)
+    # moneda del documento: la del contrato si es otra, si no la base
+    mon = p.moneda_contrato if (p.moneda_contrato and p.moneda_contrato != base) else base
+    precio = float(p.precio_contrato or 0) if mon != base else float(p.precio_base or 0)
     costos = [e["costo_previsto"] for e in filas]
     pesos = costos if sum(costos) > 0 else [e["peso_efectivo"] for e in filas]
     precios = _repartir(precio, pesos)
@@ -69,19 +71,13 @@ def datos(db: Session, p: Proyecto, a_fecha: date | None = None, moneda: str | N
         ))
 
     impuesto = round(precio * (p.impuesto or 0), 2)
-    fx = None
-    if moneda and moneda != base:
-        cot = costeo.cotizacion_vigente(db, moneda, hoy)
-        if cot is None:
-            raise costeo.FaltaCotizacion(moneda)
-        # valor = unidades de la base por 1 unidad de `moneda`; para convertir se divide
-        fx = dict(moneda=moneda, valor=float(cot.valor), factor=1 / float(cot.valor), fecha=cot.fecha)
+    fx = _fx(db, moneda, mon, hoy)
 
     logo = logo_efectivo()
     proximo = next((e for e in etapas if e["hito"] and not e["hito_cumplido"]), None)
     return dict(
         empresa=empresa(cfg, tx) | dict(logo=str(logo) if logo else None),
-        credito=CREDITO, idioma=idioma, t=tx, moneda=base,
+        credito=CREDITO, idioma=idioma, t=tx, moneda=mon, nota_ajuste=_nota_ajuste(p, tx),
         proyecto=dict(id=p.id, nombre=p.nombre, cliente=p.cliente.nombre if p.cliente else "",
                       contacto=p.cliente.contacto if p.cliente else None, alcance=p.alcance or "",
                       inicio=p.fecha_inicio, fin=p.fecha_fin,
@@ -117,13 +113,23 @@ def convertir(d: dict, importe_base: float) -> float | None:
     return round(importe_base * d["fx"]["factor"], 2) if d.get("fx") else None
 
 
-def _fx(db: Session, moneda: str | None, base: str, hoy: date) -> dict | None:
-    if not moneda or moneda == base:
+def _fx(db: Session, moneda: str | None, mon: str, hoy: date) -> dict | None:
+    """Columna adicional en `moneda`: `valor` = unidades de la moneda del documento por 1 de `moneda`."""
+    if not moneda or moneda == mon:
         return None
-    cot = costeo.cotizacion_vigente(db, moneda, hoy)
-    if cot is None:
-        raise costeo.FaltaCotizacion(moneda)
-    return dict(moneda=moneda, valor=float(cot.valor), factor=1 / float(cot.valor), fecha=cot.fecha)
+    v_dest = costeo.base_por_unidad(db, moneda, hoy)
+    v_doc = costeo.base_por_unidad(db, mon, hoy)
+    valor = v_dest / v_doc
+    cot = costeo.cotizacion_vigente(db, moneda, hoy) or costeo.cotizacion_vigente(db, mon, hoy)
+    return dict(moneda=moneda, valor=valor, factor=1 / valor, fecha=cot.fecha if cot else hoy)
+
+
+def _nota_ajuste(p, tx: dict) -> str | None:
+    if p.ajuste_indice != "ipc" or not p.ajuste_mes_base:
+        return None
+    cada = p.ajuste_cada_meses or 3
+    periodo = tx["periodos"].get(cada, tx["cada_n_meses"].format(n=cada))
+    return tx["nota_ipc"].format(p=periodo, m=i18n.mes_anio(p.ajuste_mes_base, tx))
 
 
 def datos_presupuesto(db: Session, pres, a_fecha: date | None = None, moneda: str | None = None,
@@ -149,6 +155,11 @@ def datos_presupuesto(db: Session, pres, a_fecha: date | None = None, moneda: st
     claves = sorted(grupos, key=lambda k: (k == "", orden.get(k.lower(), 999)))
     costos = [sum(f["costo"] or 0 for f in grupos[k]) for k in claves]
     precio = calc["resumen"]["precio"]
+    mon = cfg.moneda_base
+    conv = 1.0
+    if calc.get("contrato"):  # presupuesto en otra moneda: importes expresados en esa moneda
+        mon, conv = calc["contrato"]["moneda"], 1 / calc["contrato"]["cotizacion"]
+        precio = calc["contrato"]["precio"]
     precios = _repartir(precio, costos if sum(costos) > 0 else [1.0] * len(claves))
     etapas = []
     for k, pe in zip(claves, precios):
@@ -164,11 +175,11 @@ def datos_presupuesto(db: Session, pres, a_fecha: date | None = None, moneda: st
                            estado=tx["estados"]["no iniciada"], estado_cod="no iniciada",
                            tareas=[dict(nombre=f["tarea"], inicio=f["fecha_inicio"] or ini, fin=f["fecha_fin"] or fin,
                                         avance=0, terminada=False) for f in fs]))
-    impuesto = calc["resumen"]["impuesto"]
+    impuesto = round(calc["resumen"]["impuesto"] * conv, 2)
     logo = logo_efectivo()
     return dict(
         empresa=empresa(cfg, tx) | dict(logo=str(logo) if logo else None),
-        credito=CREDITO, idioma=idioma, t=tx, moneda=cfg.moneda_base,
+        credito=CREDITO, idioma=idioma, t=tx, moneda=mon, nota_ajuste=None,
         proyecto=dict(id=p.id, nombre=p.nombre, cliente=p.cliente.nombre if p.cliente else "",
                       contacto=p.cliente.contacto if p.cliente else None, alcance=p.alcance or "",
                       inicio=p.fecha_inicio, fin=p.fecha_fin,
@@ -178,5 +189,5 @@ def datos_presupuesto(db: Session, pres, a_fecha: date | None = None, moneda: st
         condiciones=cfg.condiciones or "", etapas=etapas,
         horas_totales=sum(e["horas"] for e in etapas),
         precio=precio, impuesto_pct=pres.impuesto or 0, impuesto=impuesto, total=round(precio + impuesto, 2),
-        fx=_fx(db, moneda, cfg.moneda_base, hoy),
+        fx=_fx(db, moneda, mon, hoy),
     )

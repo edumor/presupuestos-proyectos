@@ -46,11 +46,13 @@
         <label>Margen objetivo (%)<input name="margen_defecto" type="number" step="0.1" min="0" max="99" data-pct="1" required></label>
         <label>Alerta si el margen baja de (%)<input name="margen_alerta" type="number" step="0.1" min="0" max="99" data-pct="1" required></label>
         <label>Impuesto por defecto (%)<input name="impuesto_defecto" type="number" step="0.01" min="0" max="100" data-pct="1" required></label>
+        <label>Aumento previsto de costos (% mensual)<input name="aumento_costos_mensual" type="number" step="0.1" min="0" max="100" data-pct="1"></label>
         <label>Zona horaria<input name="zona_horaria" required></label>
       </div>
       <p class="small muted">Utilización: % de las horas de un empleado que se facturan a clientes (referencia del sector: 65–80%).
         Contribuciones patronales: cargas sociales que paga la empresa sobre el sueldo bruto (en Argentina, alrededor de 26–28% más ART).
-        El impuesto es solo un % que se suma al precio; la definición fiscal la hace el contador.</p>
+        El impuesto es solo un % que se suma al precio; la definición fiscal la hace el contador.
+        Aumento previsto de costos: cuánto estimás que suben por mes sueldos y tarifas; se usa para proyectar el costo del trabajo pendiente (0 = sin aumento).</p>
       <div class="actions"><button class="primary">Guardar</button></div>
     </form>
     <form class="card" id="f-moneda">

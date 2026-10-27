@@ -96,6 +96,7 @@ function pintarEditor() {
           <label>Margen objetivo (%)<input id="pres-margen" type="number" step="0.5" min="0" max="95" value="${+(d.margen * 100).toFixed(2)}" ${dis}></label>
           <label>Impuesto (%)<input id="pres-imp" type="number" step="0.5" min="0" max="100" value="${+(d.impuesto_pct * 100).toFixed(2)}" ${dis}></label>
           <label>Precio final (${BASE})<input id="pres-precio" type="number" step="1000" min="0" value="${d.precio_manual ?? ''}" placeholder="${fmtNum(d.resumen.precio_sugerido, 0)}" ${dis}></label>
+          <label style="grid-column:1/-1">Moneda del contrato<select id="pres-moneda" ${dis}>${opts([BASE, ...Object.keys(MONEDAS).filter(m => m !== BASE)].map(m => [m, m === BASE ? m + ' (moneda base)' : m + ' · el precio queda fijo en ' + m + ' al aprobar']), d.moneda_contrato || BASE)}</select></label>
         </div>
         <label style="margin-top:12px">Notas internas<textarea id="pres-notas" rows="2" ${dis}>${esc(d.notas || '')}</textarea></label>
       </div>
@@ -122,6 +123,7 @@ function pintarResumen() {
     ${fila('Ganancia', fmtBase(r.ganancia))}
     ${fila('Margen real', `<span class="v-${claseMargen(r.margen_real, al)}">${fmtPct(r.margen_real, 1)}</span>`, true)}
     ${r.impuesto ? fila('Impuesto', fmtBase(r.impuesto)) + fila('Total con impuesto', fmtBase(r.total), true) : ''}
+    ${PR.d.contrato ? fila(`Precio del contrato en ${PR.d.contrato.moneda} (1 ${PR.d.contrato.moneda} = ${fmtNum(PR.d.contrato.cotizacion)} ${BASE})`, fmtBase(PR.d.contrato.precio, PR.d.contrato.moneda), true) : ''}
   </table>`;
   equivalente(r.precio).then(eq => { const e = document.getElementById('pres-eq'); if (e) e.textContent = eq; });
 }
@@ -143,6 +145,7 @@ function leerEditor() {
   return { margen: (num(document.getElementById('pres-margen').value) || 0) / 100,
     impuesto: (num(document.getElementById('pres-imp').value) || 0) / 100,
     precio_base: num(document.getElementById('pres-precio').value), notas: document.getElementById('pres-notas').value || null,
+    moneda_contrato: (v => v === BASE ? null : v)(document.getElementById('pres-moneda').value),
     items, externos };
 }
 function programarGuardado() { clearTimeout(PR.timer); PR.timer = setTimeout(() => guardarPres(), 400); }

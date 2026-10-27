@@ -2,8 +2,6 @@
 
 https://github.com/user-attachments/assets/3ca88438-2c13-431a-82d8-eaf357ab9e7c
 
-
-
 Aplicación de escritorio para **agencias y consultoras de marketing digital** que presupuestan
 proyectos de alcance cerrado cotizados por hora y necesitan saber, semana a semana, si cada
 proyecto va en tiempo y si va a dejar el margen esperado.
@@ -26,8 +24,9 @@ del usuario y se respalda sola cada vez que se abre el programa.
   costo final estimado (EAC) y **margen proyectado**, con semáforos.
 - **Cronograma (Gantt)** previsto vs. real, hitos, aprobaciones del cliente y curva S.
 - **Cartera**: todos los proyectos activos, riesgos y carga semanal del equipo.
-- **Multimoneda**: moneda base configurable (**pesos argentinos por defecto**) y conversión a
-  dólares, euros, libras, reales y otras con cotizaciones fechadas.
+- **Multimoneda e inflación**: moneda base configurable (**pesos argentinos por defecto**),
+  cotizaciones oficiales del **BCRA** con un clic, **contratos en dólares** reexpresados al día,
+  **ajuste por IPC** (mensual, trimestral o semestral) y proyección de costos con aumento previsto.
 - **Documentos para el cliente en español o inglés** (propuesta e informe de avance en PDF o
   Excel, y dashboard interactivo en un único HTML) **sin costos internos ni nombres del equipo**,
   con la opción de mostrar el equivalente en USD.

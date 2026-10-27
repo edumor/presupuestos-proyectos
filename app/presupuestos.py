@@ -70,8 +70,17 @@ def calcular(db: Session, pres: Presupuesto, a_fecha: date | None = None) -> dic
     sugerido = calculos.precio_desde_costo(costo, pres.margen) if costo else 0.0
     precio = float(pres.precio_base) if pres.precio_base is not None else round(sugerido, 2)
     impuesto = round(precio * (pres.impuesto or 0), 2)
+    contrato = None
+    if pres.moneda_contrato and pres.moneda_contrato != costeo.moneda_base(db):
+        try:
+            fx = costeo.base_por_unidad(db, pres.moneda_contrato, a_fecha)
+            contrato = dict(moneda=pres.moneda_contrato, cotizacion=fx, precio=round(precio / fx, 2),
+                            total=round((precio + impuesto) / fx, 2))
+        except costeo.FaltaCotizacion:
+            avisos.append(f"No hay cotización de {pres.moneda_contrato} para expresar el contrato en esa moneda.")
     return dict(
         id=pres.id, proyecto_id=pres.proyecto_id, version=pres.version, estado=pres.estado.value,
+        moneda_contrato=pres.moneda_contrato, contrato=contrato,
         margen=pres.margen, impuesto_pct=pres.impuesto or 0, notas=pres.notas,
         fecha_envio=pres.fecha_envio, fecha_aprobacion=pres.fecha_aprobacion,
         precio_manual=float(pres.precio_base) if (pres.precio_base is not None and not congelado) else None,
@@ -98,7 +107,8 @@ def nueva_version(db: Session, p: Proyecto, copiar_de: Presupuesto | None = None
     pres = Presupuesto(proyecto_id=p.id, version=n, estado=EstadoPresupuesto.borrador,
                        margen=base.margen if base else (p.margen if p.margen is not None else cfg.margen_defecto),
                        impuesto=base.impuesto if base else (p.impuesto or cfg.impuesto_defecto),
-                       notas=base.notas if base else None)
+                       notas=base.notas if base else None,
+                       moneda_contrato=base.moneda_contrato if base else p.moneda_contrato)
     db.add(pres)
     if base:
         congelado = base.estado == EstadoPresupuesto.aprobado
@@ -146,6 +156,11 @@ def aprobar(db: Session, pres: Presupuesto, generar_tareas: bool = True, hoy: da
             x.estado = EstadoPresupuesto.rechazado
     # proyecto
     p.precio_base, p.margen, p.impuesto = r["precio"], pres.margen, pres.impuesto
+    if d["contrato"]:  # contrato en otra moneda: el precio queda fijo en esa moneda
+        p.moneda_contrato, p.precio_contrato = d["contrato"]["moneda"], d["contrato"]["precio"]
+        p.ajuste_indice = None
+    else:
+        p.moneda_contrato, p.precio_contrato = None, None
     if p.estado == EstadoProyecto.en_presupuesto:
         p.estado = EstadoProyecto.en_curso
     for g in pres.costos_externos:  # los gastos previstos pasan al seguimiento del proyecto

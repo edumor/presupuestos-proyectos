@@ -78,6 +78,7 @@ def cargar(db: Session) -> None:
         raise BaseNoCompatible(f"Los datos de ejemplo están en pesos (ARS) y la moneda base es {cfg.moneda_base}.")
     cfg.horas_anuales, cfg.utilizacion, cfg.ss_empresa_defecto = 1760, 0.70, 0.284
     cfg.margen_defecto, cfg.margen_alerta, cfg.horas_autonomos_anuales = 0.35, 0.25, 1500
+    cfg.aumento_costos_mensual = 0.02
 
     roles = {r.nombre: r for r in db.scalars(select(Rol))}
     for n in ROLES:
@@ -206,6 +207,10 @@ def _proyectos_ejemplo(db: Session, cliente: Cliente) -> None:
                     externos += importe * fx
         # precio acordado: costo previsto con 35 % de margen, redondeado a $10.000
         p.precio_base = round((costo_tareas + externos) / (1 - p.margen), -4)
+        if nombre == "Auditoría SEO":  # contrato en dólares: el precio queda fijo en USD
+            usd = COTIZACIONES["USD"][0]
+            p.moneda_contrato, p.precio_contrato = "USD", round(p.precio_base / usd, -1)
+            p.precio_base = p.precio_contrato * usd
     db.commit()
 
 

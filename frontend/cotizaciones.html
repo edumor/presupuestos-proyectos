@@ -13,15 +13,25 @@
     <div class="card">
       <h2>Cargar cotización del día</h2>
       <form id="f-cot">
-        <div class="fields" id="campos" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr))"><label>Fecha<input name="fecha" type="date" required id="fecha"></label></div>
-        <div class="actions" style="justify-content:flex-start"><button class="primary">Guardar</button></div>
+        <div id="campos" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px"><label>Fecha<input name="fecha" type="date" required id="fecha"></label></div>
+        <div class="actions" style="justify-content:flex-start"><button class="primary">Guardar</button>
+          <button type="button" id="btn-bcra" onclick="traerBCRA()" title="Cotizaciones oficiales del Banco Central para la fecha elegida">Traer del BCRA</button></div>
       </form>
-      <p class="small muted">Completá solo las monedas que uses. Si ya había una cotización para esa fecha y moneda, se reemplaza.</p>
+      <p class="small muted">Completá solo las monedas que uses, o tocá <strong>Traer del BCRA</strong> para cargar todas las del día (requiere internet; el programa solo consulta datos públicos). Si ya había una cotización para esa fecha y moneda, se reemplaza.</p>
     </div>
     <div class="card">
       <h2 style="display:flex;justify-content:space-between;gap:8px;align-items:center">Evolución <select id="g-moneda" style="font-weight:400"></select></h2>
       <div class="chart-box" style="height:220px"><canvas id="g-cot"></canvas></div>
     </div>
+  </div>
+  <div class="card" style="margin-top:16px">
+    <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center">
+      <h2 style="margin:0">Inflación mensual (IPC INDEC)</h2>
+      <button class="primary" onclick="traerIPC()">Actualizar desde el BCRA</button></div>
+    <p class="small muted">Se usa para ajustar el precio de los proyectos con cláusula de ajuste por IPC. Variación del mes en %, por ejemplo 1,9.</p>
+    <form class="row" id="f-ipc"><label>Mes<input type="month" name="mes" required></label>
+      <label>Variación (%)<input type="number" name="variacion" step="0.01" required></label><button>Cargar a mano</button></form>
+    <div style="max-height:260px;overflow:auto;margin-top:10px"><table><thead><tr><th>Mes</th><th class="num">Variación</th><th>Fuente</th><th></th></tr></thead><tbody id="tabla-ipc"></tbody></table></div>
   </div>
   <div class="card" style="margin-top:16px">
     <h2>Historial</h2>
@@ -82,6 +92,34 @@ document.getElementById('f-cot').addEventListener('submit', async ev => {
     toast('Cotización guardada'); llenas.forEach(m => f[m].value = ''); cargar();
   } catch (e) { toast(e.message, true); }
 });
+async function traerBCRA() {
+  const b = document.getElementById('btn-bcra'), fecha = document.getElementById('fecha').value;
+  b.disabled = true; b.textContent = 'Consultando…';
+  try {
+    const r = await api('/cotizaciones/bcra' + (fecha ? '?fecha=' + fecha : ''), { method: 'POST' });
+    toast(`BCRA ${fmtFecha(r.fecha)}: ` + r.cotizaciones.filter(c => ['USD', 'EUR', 'BRL'].includes(c.moneda)).map(c => `${c.moneda} ${fmtNum(c.valor)}`).join(' · '));
+    cargar();
+  } catch (e) { toast(e.message, true); }
+  b.disabled = false; b.textContent = 'Traer del BCRA';
+}
+async function cargarIPC() {
+  const xs = await api('/ipc');
+  const mes = m => ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'][+m.slice(5, 7) - 1] + ' ' + m.slice(0, 4);
+  document.getElementById('tabla-ipc').innerHTML = xs.map(i => `<tr><td>${mes(i.mes)}</td><td class="num">${fmtNum(i.variacion, 1)} %</td>
+    <td class="small muted">${esc(i.fuente || '')}</td><td class="num"><button class="link danger" onclick="borrarIPC(${i.id})">Borrar</button></td></tr>`).join('')
+    || '<tr><td colspan="4" class="muted">Sin datos. Tocá "Actualizar desde el BCRA" o cargalos a mano.</td></tr>';
+}
+async function traerIPC() {
+  try { const r = await api('/ipc/bcra', { method: 'POST' }); toast(`IPC actualizado: ${r.meses} meses · último ${fmtFecha(r.ultimo_mes).slice(3)} ${fmtNum(r.ultima_variacion, 1)} %`); cargarIPC(); }
+  catch (e) { toast(e.message, true); }
+}
+async function borrarIPC(id) { await api('/ipc/' + id, { method: 'DELETE' }); cargarIPC(); }
+document.getElementById('f-ipc').addEventListener('submit', async ev => {
+  ev.preventDefault(); const f = ev.target;
+  try { await api('/ipc', { method: 'POST', body: { mes: f.mes.value + '-01', variacion: Number(f.variacion.value) } }); f.reset(); cargarIPC(); }
+  catch (e) { toast(e.message, true); }
+});
+cargarIPC();
 async function borrar(id) {
   if (!confirm('¿Borrar esta cotización?')) return;
   await api(`/cotizaciones/${id}`, { method: 'DELETE' }); cargar();

@@ -72,9 +72,10 @@ def propuesta(d: dict) -> bytes:
     ws.cell(fin, 1, t["nota_reparto"]).font = Font(italic=True, color="5D6677", size=9)
     if fx:
         fin += 1
-        nota = t["nota_fx"].format(m=fx["moneda"], v=i18n.numero(fx["valor"], 4, d["idioma"]), b=mb,
-                                   f=i18n.fecha(fx["fecha"], t))
-        ws.cell(fin, 1, nota).font = Font(italic=True, color="5D6677", size=9)
+        ws.cell(fin, 1, i18n.nota_fx(fx, mb, t, d["idioma"])).font = Font(italic=True, color="5D6677", size=9)
+    if d.get("nota_ajuste"):
+        fin += 1
+        ws.cell(fin, 1, d["nota_ajuste"]).font = Font(italic=True, color="5D6677", size=9)
     if d["condiciones"]:
         fin += 2
         ws.cell(fin, 1, t["condiciones"]).font = Font(bold=True, size=12)

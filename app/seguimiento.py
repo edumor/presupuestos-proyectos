@@ -18,7 +18,7 @@ from datetime import date, timedelta
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from . import calculos
+from . import calculos, costeo
 from .models import (AvanceRegistro, CostoExterno, Etapa, EstadoProyecto, HoraReal, PlantillaEtapa,
                      Proyecto, Tarea)
 
@@ -127,9 +127,17 @@ def metricas(db: Session, p: Proyecto, a_fecha: date | None = None) -> dict:
     cpi = ev / ac if ac else None
     spi = ev / pv if pv else None
     eac_mo = bac / cpi if cpi else bac
-    eac = eac_mo + max(ext_prev, ext_real)
+    # trabajo pendiente proyectado con el aumento previsto de sueldos y tarifas
+    from . import contratos
+    aumento = getattr(costeo.config(db), "aumento_costos_mensual", 0) or 0
+    fin = max(p.fecha_fin or hoy, hoy)
+    pendiente = max(eac_mo - ac, 0.0)
+    factor_aum = contratos.factor_aumento_costos(aumento, hoy, fin)
+    eac_mo_aj = ac + pendiente * factor_aum
+    eac = eac_mo_aj + max(ext_prev, ext_real)
     costo_previsto = bac + ext_prev
-    precio = float(p.precio_base) if p.precio_base else None
+    contrato = contratos.precio_actual(db, p, hoy)
+    precio = contrato["precio"] or None
     margen_prev = (precio - costo_previsto) / precio if precio else None
     margen_proy = (precio - eac) / precio if precio else None
 
@@ -172,7 +180,8 @@ def metricas(db: Session, p: Proyecto, a_fecha: date | None = None) -> dict:
     return dict(
         proyecto_id=p.id, nombre=p.nombre, cliente=p.cliente.nombre if p.cliente else None,
         estado=p.estado.value, fecha_inicio=p.fecha_inicio, fecha_fin=p.fecha_fin, a_fecha=hoy,
-        precio_base=precio, bac=bac, pv=pv, ev=ev, ac=ac, cpi=cpi, spi=spi,
+        precio_base=precio, precio_original=contrato["original"], contrato=contrato,
+        aumento_costos_mensual=aumento, eac_sin_aumentos=eac_mo + max(ext_prev, ext_real), bac=bac, pv=pv, ev=ev, ac=ac, cpi=cpi, spi=spi,
         eac_mano_obra=eac_mo, externos_previstos=ext_prev, externos_reales=ext_real,
         costo_previsto=costo_previsto, eac=eac, margen_previsto=margen_prev, margen_proyectado=margen_proy,
         avance_ponderado=avance_pond, avance_costo=(ev / bac if bac else 0.0),

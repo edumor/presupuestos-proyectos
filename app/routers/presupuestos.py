@@ -9,11 +9,11 @@ from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from .. import presupuestos as motor
+from .. import costeo, presupuestos as motor
 from ..database import get_db
 from ..models import (CostoExterno, EstadoPresupuesto, Persona, Presupuesto, PresupuestoItem, Proyecto, Rol,
                       Servicio, Tarea)
-from ..schemas import PresupuestoIn, PresupuestoNuevo, ServicioIn, ServicioOut
+from ..schemas import MONEDAS, PresupuestoIn, PresupuestoNuevo, ServicioIn, ServicioOut
 
 router = APIRouter(prefix="/api", tags=["Presupuestos"])
 
@@ -139,6 +139,10 @@ def guardar(prid: int, d: PresupuestoIn, db: Session = Depends(get_db)):
         if it.fecha_inicio and it.fecha_fin and it.fecha_fin < it.fecha_inicio:
             raise HTTPException(422, f"«{it.tarea}»: la fecha de fin es anterior a la de inicio")
     pres.margen, pres.impuesto, pres.precio_base, pres.notas = d.margen, d.impuesto, d.precio_base, d.notas
+    mc = (d.moneda_contrato or "").upper() or None
+    if mc and mc not in MONEDAS:
+        raise HTTPException(422, "Moneda no admitida")
+    pres.moneda_contrato = None if mc == costeo.moneda_base(db) else mc
     pres.items.clear()
     pres.costos_externos.clear()
     db.flush()

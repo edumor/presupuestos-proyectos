@@ -78,6 +78,18 @@ def _proy_out(p: Proyecto) -> ProyectoOut:
     return o
 
 
+def _normalizar_contrato(db: Session, p: Proyecto) -> None:
+    """Contrato en otra moneda: guarda también su equivalente en moneda base a hoy como referencia."""
+    base = costeo.moneda_base(db)
+    if not p.moneda_contrato or p.moneda_contrato == base:
+        p.moneda_contrato, p.precio_contrato = None, None
+        return
+    if p.precio_contrato is not None:
+        p.precio_base = round(float(p.precio_contrato) * costeo.base_por_unidad(db, p.moneda_contrato), 2)
+    if p.ajuste_indice:
+        raise HTTPException(422, "El ajuste por IPC es para contratos en la moneda base")
+
+
 @router.get("/proyectos", response_model=list[ProyectoOut])
 def proyectos(estado: EstadoProyecto | None = None, db: Session = Depends(get_db)):
     q = select(Proyecto).order_by(Proyecto.fecha_inicio.desc())
@@ -91,6 +103,7 @@ def crear_proyecto(d: ProyectoCrear, db: Session = Depends(get_db)):
     _get(db, Cliente, d.cliente_id, "Cliente")
     datos = d.model_dump(exclude={"usar_plantilla"})
     p = Proyecto(**datos)
+    _normalizar_contrato(db, p)
     db.add(p)
     if d.usar_plantilla:
         p.etapas = seguimiento.etapas_desde_plantilla(db, p)
@@ -108,6 +121,7 @@ def editar_proyecto(pid: int, d: ProyectoIn, db: Session = Depends(get_db)):
     p = _get(db, Proyecto, pid, "Proyecto")
     for k, v in d.model_dump().items():
         setattr(p, k, v)
+    _normalizar_contrato(db, p)
     db.commit()
     return _proy_out(p)
 
