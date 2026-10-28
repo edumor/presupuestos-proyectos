@@ -1,8 +1,10 @@
 # Presupuestos y seguimiento de proyectos
 
-[![Ver la presentación en video (1:30, con voz)](docs/video/portada.png)](docs/video/Presupuestos_presentacion.mp4)
+https://github.com/user-attachments/assets/e7e4f93b-827e-4059-a63c-13493d790ee9
 
-**[Ver la presentación (1:30)](docs/video/Presupuestos_presentacion.mp4)** · [Versión vertical para celular (40 s)](docs/video/Presupuestos_reel.mp4) ·
+> 🔊 Activá el sonido con el ícono del parlante del reproductor.
+
+[Descargar la presentación en alta calidad](https://github.com/edumor/presupuestos-proyectos/raw/main/docs/video/Presupuestos_presentacion.mp4) · [Versión vertical para celular (40 s)](https://github.com/edumor/presupuestos-proyectos/raw/main/docs/video/Presupuestos_reel.mp4) ·
 [Descargar el instalador](https://github.com/edumor/presupuestos-proyectos/releases/latest) ·
 Implementación y soporte: [Lic. Eduardo J. Moreno en LinkedIn](https://www.linkedin.com/in/eduardo-moreno-15813b19b)
 
