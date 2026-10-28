@@ -1,0 +1,104 @@
+1
+00:00:00,350 --> 00:00:01,374
+¿Sabés cuánto ganaste
+
+2
+00:00:01,424 --> 00:00:02,499
+realmente en tu último
+
+3
+00:00:02,549 --> 00:00:02,959
+proyecto?
+
+4
+00:00:03,909 --> 00:00:04,856
+Presupuestos a ojo,
+
+5
+00:00:04,906 --> 00:00:05,957
+horas que nadie mide,
+
+6
+00:00:06,007 --> 00:00:07,531
+y un margen que aparece recién
+
+7
+00:00:07,581 --> 00:00:08,003
+al final.
+
+8
+00:00:08,953 --> 00:00:10,172
+Con Presupuestos armás la
+
+9
+00:00:10,222 --> 00:00:11,237
+propuesta en minutos,
+
+10
+00:00:11,287 --> 00:00:12,709
+con el costo y el margen a la
+
+11
+00:00:12,759 --> 00:00:13,013
+vista.
+
+12
+00:00:13,963 --> 00:00:15,456
+Seguís cada proyecto semana a
+
+13
+00:00:15,506 --> 00:00:17,158
+semana, con semáforos de plazo y
+
+14
+00:00:17,208 --> 00:00:17,478
+costo.
+
+15
+00:00:18,428 --> 00:00:20,038
+Registrás facturas y cobros,
+
+16
+00:00:20,088 --> 00:00:21,164
+también en dólares.
+
+17
+00:00:22,114 --> 00:00:23,217
+Y sabés qué clientes y
+
+18
+00:00:23,267 --> 00:00:24,684
+servicios te dejan ganancia,
+
+19
+00:00:24,734 --> 00:00:26,255
+y cómo viene tu flujo de caja.
+
+20
+00:00:27,205 --> 00:00:28,558
+Funciona en tu computadora,
+
+21
+00:00:28,608 --> 00:00:29,909
+con cotizaciones del Banco
+
+22
+00:00:29,959 --> 00:00:31,416
+Central, y es software libre.
+
+23
+00:00:32,366 --> 00:00:33,769
+Descargalo gratis en GitHub,
+
+24
+00:00:33,819 --> 00:00:35,273
+o contactá al Lic. Eduardo J.
+
+25
+00:00:35,323 --> 00:00:36,518
+Moreno por LinkedIn para
+
+26
+00:00:36,568 --> 00:00:37,970
+implementarlo en tu agencia.
+

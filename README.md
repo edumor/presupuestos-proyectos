@@ -1,6 +1,16 @@
 # Presupuestos y seguimiento de proyectos
 
+[![Ver la presentación en video (1:30, con voz)](docs/video/portada.png)](docs/video/Presupuestos_presentacion.mp4)
+
+**[Ver la presentación (1:30)](docs/video/Presupuestos_presentacion.mp4)** · [Versión vertical para celular (40 s)](docs/video/Presupuestos_reel.mp4) ·
+[Descargar el instalador](https://github.com/edumor/presupuestos-proyectos/releases/latest) ·
+Implementación y soporte: [Lic. Eduardo J. Moreno en LinkedIn](https://www.linkedin.com/in/eduardo-moreno-15813b19b)
+
+<details><summary>Recorrido rápido por las pantallas (video anterior, sin voz)</summary>
+
 https://github.com/user-attachments/assets/3ca88438-2c13-431a-82d8-eaf357ab9e7c
+
+</details>
 
 Aplicación de escritorio para **agencias y consultoras de marketing digital** que presupuestan
 proyectos de alcance cerrado cotizados por hora y necesitan saber, semana a semana, si cada
@@ -116,6 +126,11 @@ su huella SHA-256 y el manual en PDF. Lo compila GitHub Actions a partir de este
 
 Los aportes son bienvenidos mediante [issues](https://github.com/edumor/presupuestos-proyectos/issues) y *pull requests*. Antes de enviar cambios, corré
 `pytest`. Al contribuir aceptás que tu aporte se publique bajo la misma licencia.
+
+## Implementación y soporte
+
+¿Querés usarlo en tu agencia o consultora? Ofrezco implementación (carga del equipo, la estructura de costos y el
+catálogo de servicios), capacitación y soporte. Contacto: [Lic. Eduardo J. Moreno en LinkedIn](https://www.linkedin.com/in/eduardo-moreno-15813b19b).
 
 ## Licencia y autoría
 

@@ -1,0 +1,176 @@
+1
+00:00:00,350 --> 00:00:03,213
+¿Sabés cuánto ganaste realmente en tu último proyecto?
+
+2
+00:00:03,263 --> 00:00:05,694
+La mayoría de las agencias se entera al final,
+
+3
+00:00:05,744 --> 00:00:06,718
+cuando ya es tarde.
+
+4
+00:00:07,668 --> 00:00:09,085
+Presupuestos armados a ojo,
+
+5
+00:00:09,135 --> 00:00:10,226
+horas que nadie mide,
+
+6
+00:00:10,276 --> 00:00:13,214
+y un dólar y una inflación que cambian todos los meses.
+
+7
+00:00:13,264 --> 00:00:14,681
+Para eso está Presupuestos:
+
+8
+00:00:14,731 --> 00:00:17,343
+un sistema pensado para agencias y consultoras de
+
+9
+00:00:17,393 --> 00:00:18,321
+marketing digital.
+
+10
+00:00:19,271 --> 00:00:21,462
+Primero, conocés el costo real de cada hora:
+
+11
+00:00:21,512 --> 00:00:22,889
+sueldos con cargas sociales,
+
+12
+00:00:22,939 --> 00:00:25,792
+tarifas de autónomos y los gastos fijos de tu estructura.
+
+13
+00:00:26,742 --> 00:00:29,346
+Armás la propuesta en minutos desde tu catálogo de
+
+14
+00:00:29,396 --> 00:00:30,726
+servicios, y ves el costo,
+
+15
+00:00:30,776 --> 00:00:33,008
+el precio y el margen mientras la escribís.
+
+16
+00:00:33,058 --> 00:00:34,176
+En pesos o en dólares,
+
+17
+00:00:34,226 --> 00:00:35,502
+con ajuste por inflación.
+
+18
+00:00:36,452 --> 00:00:38,711
+Tu cliente recibe una propuesta profesional,
+
+19
+00:00:38,761 --> 00:00:39,917
+en español o en inglés,
+
+20
+00:00:39,967 --> 00:00:41,701
+con cronograma y precio por etapa,
+
+21
+00:00:41,751 --> 00:00:43,380
+sin mostrar tus costos internos.
+
+22
+00:00:44,330 --> 00:00:47,002
+Una vez aprobada, seguís el proyecto semana a semana:
+
+23
+00:00:47,052 --> 00:00:47,927
+avance por etapas,
+
+24
+00:00:47,977 --> 00:00:50,855
+e indicadores que te avisan si vas atrasado o gastando de
+
+25
+00:00:50,905 --> 00:00:51,060
+más.
+
+26
+00:00:52,010 --> 00:00:54,381
+El cronograma compara lo previsto con lo real,
+
+27
+00:00:54,431 --> 00:00:55,118
+hito por hito.
+
+28
+00:00:56,068 --> 00:00:58,103
+Y en una sola pantalla ves toda la cartera,
+
+29
+00:00:58,153 --> 00:01:00,140
+con el margen proyectado de cada proyecto.
+
+30
+00:01:01,090 --> 00:01:02,507
+Registrás facturas y cobros,
+
+31
+00:01:02,557 --> 00:01:03,608
+con sus vencimientos,
+
+32
+00:01:03,658 --> 00:01:06,438
+y la diferencia de cambio de los contratos en dólares.
+
+33
+00:01:07,388 --> 00:01:09,695
+A fin de mes sabés qué clientes te dejan margen,
+
+34
+00:01:10,645 --> 00:01:13,056
+qué servicios llevan más horas de las que cobrás,
+
+35
+00:01:14,006 --> 00:01:15,398
+y cómo viene el flujo de caja,
+
+36
+00:01:15,448 --> 00:01:16,360
+con lo que te deben.
+
+37
+00:01:17,310 --> 00:01:18,650
+Funciona en tu computadora,
+
+38
+00:01:18,700 --> 00:01:20,967
+con cotizaciones oficiales del Banco Central,
+
+39
+00:01:21,017 --> 00:01:22,615
+copias de seguridad automáticas,
+
+40
+00:01:22,665 --> 00:01:23,645
+y es software libre.
+
+41
+00:01:24,595 --> 00:01:26,202
+Descargalo gratis en GitHub.
+
+42
+00:01:26,252 --> 00:01:28,332
+¿Querés implementarlo en tu agencia?
+
+43
+00:01:28,382 --> 00:01:29,929
+Contactá al Lic. Eduardo J.
+
+44
+00:01:29,979 --> 00:01:31,113
+Moreno por LinkedIn.
+
